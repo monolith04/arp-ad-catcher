@@ -1,4 +1,6 @@
-print('mss_ads loaded')
+mss_ads_sv = "0.1.2"
+
+local toast_ok, toast = pcall(import, 'lib\\mimtoasts.lua')
 local mssf_ok, mssf = pcall(import, 'lib\\imgui_functions.lua')
 
 
@@ -200,7 +202,7 @@ function ad_handler(str)
   elseif str:find("[Bb]ansh") or str:find("[Ѕб]анш") then
     return vechicles(str, trade_type(str), "автомобиль", "Banshee")
   elseif str:find("[ к]омет") or str:find("[Cc]omet") then
-    return vechicles(str, trade_type(str), "автомобиль", "Banshee")
+    return vechicles(str, trade_type(str), "автомобиль", "Comet")
   elseif str:find("[Bb]andit") or str:find("[Ѕб]андито") then
     return vechicles(str, trade_type(str), "автомобиль", "Bandito")
   elseif str:find("шамал") or str:find("hamal") or str:find("шаман") or str:find("shaman") then
@@ -444,7 +446,7 @@ function ad_handler(str)
     end
   elseif str:find("двокат") then
     return "ќт мэрии "..get_location(str):gsub(" в ", "").." работет опытный адвокат. «воните."
-  elseif str:find("ценз[еЄ]р") then
+  elseif str:find("ценз[еЄ]р") or str:find("÷≈Ќ«[≈®]–") then
     return "ќт мэрии "..get_location(str):gsub(" в ", "").." работет лицензЄр. «воните."
   elseif str:find("врач") then
     if str:find("[LlЋл][Vv¬в]") or str:find("[LlЋл][Aaја][Ss—с]") then
