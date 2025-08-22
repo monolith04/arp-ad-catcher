@@ -1,4 +1,4 @@
-mss_ads_sv = "0.2.10"
+mss_ads_sv = "0.3.0"
 
 local toast_ok, toast = pcall(import, 'lib\\mimtoasts.lua')
 local mssf_ok, mssf = pcall(import, 'lib\\imgui_functions.lua')
