@@ -1,4 +1,4 @@
-mss_ads_sv = "0.2.9"
+mss_ads_sv = "0.2.10"
 
 local toast_ok, toast = pcall(import, 'lib\\mimtoasts.lua')
 local mssf_ok, mssf = pcall(import, 'lib\\imgui_functions.lua')
@@ -19,7 +19,7 @@ act_text["buy"] = "Ѕюджет: "
 act_text["auction"] = "—тавка от "
 act_text["my_change"] = "ћо€ доплата: "
 act_text["ur_change"] = "¬аша доплата: "
-act_text["d_change"] = "— доплатой."
+act_text["d_change"] = ""
 act_text["carmarket"] = "за "
 action["n"] = 'nil'
 
@@ -35,19 +35,20 @@ sf_bank_strings[3] = "—амый минимальный процент на перевод в Ѕанке ш. SF 0.6# | 
 
 
 function home_string(str, t_type, h_type, h_class, h_repair, h_number, h_location)
+  -- print(str, t_type, h_type, h_class, h_repair, h_number, h_location)
  --debug(t_type, 4)
   if t_type == "my_change" or t_type == "ur_change" or t_type == "change" then
     if str:find(".- на .+, на дом .+") then
       str_1, str_2 = str:match(".- на (.+), на дом (.+)")
       print("ќЅћ≈Ќ (секци€ 1): ", get_location(str_1), home_changer(str_2))
       return action[t_type]..h_type..h_class..h_repair..get_location(str_1)..home_changer(str_2).." "..get_price(str, t_type)
-    elseif str:find(" на ") then
+    elseif str:find(" на [^(вв)]") then
       str_1, str_2 = str:match("(.+) на (.+)")
       print("ќЅћ≈Ќ (секци€ 2): ", get_location(str_1), home_changer(str_2))
-      return action[t_type]..h_type..h_class..h_repair..get_location(str_1)..home_changer(str_2).." "..get_price(str, t_type)
+      return action[t_type]..h_type..h_class..h_repair..h_number..get_location(str_1)..home_changer(str_2).." "..get_price(str, t_type)
     else
-      print(action[t_type], h_type, h_class, h_repair, h_number, h_location, get_price(str, t_type))
-      return action[t_type]..h_type..h_class..h_repair..h_location..home_changer(str).." "..get_price(str, t_type)
+      print("ќЅћ≈Ќ (секци€ 3): ",action[t_type], h_type, h_class, h_repair, h_number, h_location, get_price(str, t_type))
+      return action[t_type]..h_type..h_class..h_repair..h_number..h_location..home_changer(str).." "..get_price(str, t_type)
     end
   end 
     price = get_price(str, t_type)
@@ -60,11 +61,11 @@ function home_changer(str)
     return " на дом в ш. Las Venturas."
   elseif str:find("дом в Los Santos") then
     return " на дом в ш. Los Santos"
-  elseif str:find("дом на вв") then
+  elseif str:find("дом на [в¬B][в¬B]") then
     return " на дом на г. VineWood"
   elseif str:find("дом у вмф") then
     return " на дом в д. Bayside"
-  elseif str:find("в гетто") then
+  elseif str:find("в гетто") or str:find("[ќо]пасном") then
     return " на дом в опасном районе."
   elseif str:find("в [—S][‘F]") then
     return " на дом в ш. San Fierro"
@@ -72,7 +73,7 @@ function home_changer(str)
     return " на дом в LS."
   elseif str:find("[Tt][ea]mple") or str:find("[“т][еи]м[лп][лп][е]?") or str:find("“≈ћѕЋ") then
     return " на дом в р. Temple"
-  elseif str:find("[ѕпPp][Kk к]") or str:find("[ѕп][ао]л[д]?[оа]м[ио][нк][оа]") or str:find("(.+)[ao]lo[nm]ino%p?%s?(.+)re[ea]k") then
+  elseif str:find("[ѕпPp][Kk к]") or str:find("[ѕп][ао]л[д]?[оа]м[ио][нк][оа]") or str:find("(.+)[ao]lo[nm][n]?ino%p?%s?(.+)re[e]?[ea]k") then
     return " на дом в д. Palomino Creek."
   else
     return " на ваш дом."
@@ -102,8 +103,10 @@ function get_house_type(str)
     home_type = "мини-дом"
   elseif str:find("[т“]ру[щш][ео]б[уыа]?") then
     home_type = "трущебу"
-  elseif str:find("[ја][пп]артаменты") then
+  elseif str:find("[ја][пп]артаменты") or str:find("[ја]парты") then
     home_type = "апартаменты"
+  elseif (str:find("[Ёэ]лит") and str:find("[ја]п[п]?арт")) then
+    home_type = "Ёлитные јппартаменты"
   elseif str:find("избу") then
     home_type = "избушку"
   elseif str:find("[ѕп]оместье у озера") then
@@ -153,7 +156,9 @@ end
 function get_house_class(str)
   if str:find("[—сCc][“т≈е]?[–р][≈е][дн]") or str:find("—–≈ƒЌџ…") or str:find("[—с]ердный") or str:find("ср.%s?кл") then
     house_class = " среднего класса"
-  elseif str:find("[Ёэ≈е]к[оа]") or str:find("низкого") then
+  elseif (str:find("[Ёэ]лит") and str:find("[ја]п[п]?арт")) then
+    house_class = ""
+  elseif str:find("[Ёэ≈е]к[оа]") or str:find("низкого") or str:find("[Ee]conom") then
     house_class = " эконом класса"
   elseif str:find("[ѕп]реми") then
     house_class = " премиум класса"
@@ -184,7 +189,7 @@ end
 function get_house_repair(str)
   if str:find("[≈еэЁ]вро%s?%p?[ер][ер][мо][мо]н") or str:find("≈¬–ќ–≈ћ") then
     house_repair = " с евроремонтом"
-  elseif str:find("рем[но][он]т") or str:find("интой") or str:find("инта") or str:find("»Ќ“ќ…") or str:find("интерьером") then
+  elseif str:find("[р–]ем[но][он]т") or str:find("интой") or str:find("инта") or str:find("»Ќ“ќ…") or str:find("интерьером") then
     house_repair = " с ремонтом"
     if str:find("шикарным") then
       house_repair = " с шикарным ремонтом"
@@ -209,8 +214,12 @@ function get_location(str)
       obj_location = " в опасном р. Idlewood"
     elseif str:find("центр") then
       obj_location = " в центре опасного района"
+    elseif str:find("респе риф") or str:find("у рифы") or str:find("[Tt]he [Rr]ifa") then
+      obj_location = " в опасном р. Playa de Seville"
     elseif str:find("на кольце") or str:find("коль[ь]?ц[ео] грув") then
       obj_location = " на кольце р. Ganton"
+    elseif str:find("на горе вагос") or str:find("[√г]ор[еа] [¬в]агос") or str:find("в районе [Vv]agos") or str:find("%p[Vv]agos%p") or str:find("[“т]ер[ие]тории [¬в]агос") then
+      obj_location = " в опасном р. Los Flores"
     elseif str:find("[Gg]ro[o]?ve [Ss]tre[e]?t") or str:find("[√г]рув [—с]трит") or str:find("[Gg]anton") or str:find("[√г][аэ]нтон") or str:find("[Gg]roove") then
       obj_location = " в опасном районе Ganton"
     elseif str:find("[Gg]len [Pp]ark") or str:find("[√г]лен [ѕп]арк") then
@@ -219,11 +228,17 @@ function get_location(str)
       obj_location = " в опасном районе"
     end
   elseif str:find("[ƒд“т][ао]м[о]?ж") then
-    obj_location = " на таможне в ш. Las Venturas"
+    if str:find("[—сSs][Ff‘ф]") then
+      obj_location = " на таможне в ш. San Fierro"
+    else
+      obj_location = " на таможне в ш. Las Venturas"
+    end
   elseif str:find("у [ај][пѕ]") then
     obj_location = " у јѕ в LS"
-  elseif str:find("[Rr]ocksh[oe]r") and str:find("[Ww]est") then
+  elseif str:find("[Rr]o[s]?[cs]ksh[oe]r") and str:find("[Ww]est") then
     obj_location = " в р. Rockshore West ш. LV"
+  elseif str:find("[Rr]o[s]?[cs]ksh[oe]r") and str:find("[Ee]ast") then
+    obj_location = " в р. Rockshore East ш. LV"
   elseif str:find("Ћ— или Ћ¬") or str:find("в лв или в лс") then
     obj_location = " в ш. Los Santos или ш. Las Venturas"
   elseif str:find("[Ћл]ас%s?%p?[Ѕб]ар[р]?анкас") or str:find("Las-Barancas") or str:find("бар[р]?а[нк]") or str:find("arran") or str:find("бар[р]?аак") or str:find("aran") or str:find("д.LB") then
@@ -239,10 +254,12 @@ function get_location(str)
   elseif str:find("[лЋ]с") or str:find("Ћ—") or str:find("лос") or str:find("Ћос") or str:find("ш.LS") or str:find("%s[Ll][Ss]") or str:find("LS%s?^[|]") or str:find("Los") or str:find("los") then
     if str:find("[∆ж][ƒд][Ћл][—с]") or str:find("%s[∆жƒд][ƒд∆ж]%s")  then
       obj_location = " в ш. Los Santos за ∆ƒ"
-    elseif str:find("на горе вагос") or str:find("[√г]ор[еа] [¬в]агос") or str:find("в районе [Vv]agos") or str:find("[“т]ер[ие]тории [¬в]агос") then
+    elseif str:find("на горе вагос") or str:find("[√г]ор[еа] [¬в]агос") or str:find("в районе [Vv]agos") or str:find("%p[Vv]agos%p") or str:find("[“т]ер[ие]тории [¬в]агос") then
       obj_location = " в опасном р. Los Flores"
     elseif str:find("у [Ѕб]оль[кн]") or str:find("[Ѕб][Ћл][—с]") then
       obj_location = " у больницы LS"
+    elseif str:find("[ја]эропорт") then
+      obj_location = " у аэропорта LS"
     elseif str:find("[Mm]ulhol[l]?and") then
       obj_location = " в р. Mulholland, ш. LS"
     elseif str:find("боль[кн]") or str:find("[Ѕб][Ћл][—с]") then
@@ -274,8 +291,8 @@ function get_location(str)
     else
       obj_location = " в ш. Los Santos"
     end
-  elseif not str:find("куебра") and str:find("[Ћлl][B¬вv]") or str:find("%sлас") or str:find("Ћас") or str:find("ш.L%p?V") or str:find("%sL.V.") or str:find("%sLV") or str:find("LV[($)|(.)]") or str:find("LVPD") or str:find("enturas") or str:find("ентура") then
-    if str:find("[Ѕб]ол[ь]?[нк]") or str:find("[Ѕб][Ћл][¬в]") then
+  elseif not str:find("куебра") and str:find("[Ћлl][B¬вv]") or str:find("%sлас") or str:find("Ћас") or str:find("ш.L%p?V") or str:find("%sL.V.") or str:find("%sLV") or str:find("[Bb][Ll][Vv]") or str:find("LV[($)|(.)]") or str:find("LVPD") or str:find("enturas") or str:find("ентура") then
+    if str:find("[Ѕб]ол[ь]?[нк]") or str:find("[ЅбBb][ЋлLl][¬вVv]") then
       obj_location = " у больницы ш. LV"
     elseif str:find("∆ƒЋ¬") or str:find("%s[∆ж][ƒд]%s[ЋлLl][Vv¬в]") then
       obj_location = " на ∆ƒЋ¬"
@@ -283,7 +300,7 @@ function get_location(str)
       obj_location = " в д. Las Brujas"
     elseif str:find("[Ћл][ к][Ќн]") or str:find("[Ll]a [Cc]osa [Nn]ostra") then
       obj_location = " в ш. Las Venturas, р. Prickle Pine"
-    elseif str:find("[(над)|(у)|(горе)|(р€дом с)] [¬в][¬в][—с]") or str:find("[Pp]ay[a]?sad[aeo]") or str:find("[ѕп]айдас") or str:find("[ѕп]а[й]?[а€]садас") then
+    elseif str:find("[(над)|(у)|(горе)|(р€дом с)] [¬в][¬в][—с]") or str:find("[Pp]ay[a]?sad[aeo]") or str:find("[ѕп]айдас") or str:find("[ѕп]а[й]?[а€]?садас") then
       obj_location = " в д. Las Payasadas"
     elseif str:find("[ѕп]усты") then
       obj_location = " в пустыне ш. Las Venturas"
@@ -314,6 +331,8 @@ function get_location(str)
   elseif not str:find("[Rr]e[d]?sands") and str:find("[—сCc][‘ф]") or str:find("сан") or str:find("—јЌ %p ‘»≈–[–]?ќ") or str:find("[—C][аa]н") or str:find("‘»≈––ќ") or str:find("[шг].SF") or str:find("%sSF") or str:find("sf") or str:find("SF%s^[|]") or str:find("San") or str:find("san") then
     if str:find("[(за)|(у)] боль[кн]") then
       obj_location = " в ш. San Fierro за больницей"
+    elseif str:find("у [ја]втошколы") then
+      obj_location = " в ш. SF у автошколы"
     elseif str:find("мор€") then
       obj_location = " в ш. San Fierro у мор€"
     elseif str:find("%s[“т]ира") then
@@ -333,21 +352,21 @@ function get_location(str)
     end
   elseif str:find("у [ја]втошколы") then
     obj_location = " в ш. SF у автошколы"
-  elseif str:find("[Dd][ei]l[l]?imor[e]?") or str:find("[ƒд][еи]л[л]?[ие]м[оу]р") then
+  elseif str:find("[Dd][ei]l[l]?imor[e]?") or str:find("[ƒд][еи]л[л]?[ие]?м[оу]р") then
     obj_location = " в д. Dillimore"
   elseif str:find("[(над)|(у)|(горе)|(р€дом с)] [¬в][¬в][—с]") or str:find("[Pp]ay[a]?[sl]ad[aeo]") or str:find("[ѕп]айдас") or str:find("[ѕп]а[й][а€]садас") then
     obj_location = " в д. Las Payasadas"
   elseif str:find("[“т][иь]?[–р]?[≈еа][рг][р]?[ао][^с]") or str:find("[Tt]ier[r]?[oa]") or str:find("[Tt]iro [Rr]obada") or str:find("%s[“т][–р]%s") or str:find("[T“]%s[(–обада)|Robada]") then
     obj_location = " в о. Tierra Robada"
-  elseif str:find("[¬вB][в¬B][^с]") or str:find("¬¬[^—]") or str:find("на горе вв") or str:find("на [г]?%p?[¬в][¬в]$") or str:find("[wW][Ww]") or str:find("(.+)ine(.+)ood") or str:find("(.+)а[ий][н]?(%s?)(.+)у[н]?д") then
+  elseif str:find("[¬вB][в¬B][^с—]") or str:find("¬¬[^—]") or str:find("на горе вв") or str:find("на [г]?%p?[¬вB][B¬в]$") or str:find("[wW][Ww]") or str:find("(.+)ine(.+)ood") or str:find("(.+)а[ий][н]?(%s?)(.+)у[н]?д") or str:find("[¬в]ин [¬в]уд") then
     obj_location = " на г. VineWood"
   elseif str:find("[ƒд]жунипер [’х]ол[л]?оу") or str:find("Juniper Hollow") then
     obj_location = " в р. Juniper Hollow, ш. SF"
   elseif str:find("[Ee]ast [Bb]each") then
     obj_location = " в р. East Beach, ш. LS"
-  elseif str:find("тгомери") or str:find("[Mm]on[tg][h]?[tg][oe]m[eo]r[ey]") or str:find("мон[о]?гомери") or str:find("M[ao]ntogomery") or str:find("фарм.+%sфаб") or str:find("[ћм]о[н]?[т?][о]?г[еуо]м[ое]ри") or str:find("мандгомери") or str:find("mogomtery") or str:find("[ћм]отенегри") or str:find("монтенегро") or str:find("[Mm]on[t]?go") then
+  elseif str:find("т[г]?омери") or str:find("[Mm]on[tgG][h]?[tgG][oe]m[eo]r[ey]") or str:find("[мћ]он[о]?[г]?омери") or str:find("M[ao]ntogomery") or str:find("фарм.+%sфаб") or str:find("[ћм]о[н]?[т?][о]?г[еуо]м[ое]р[р]?[иы]") or str:find("мандгомери") or str:find("mogomtery") or str:find("[ћм]отенегри") or str:find("монтенегро") or str:find("[Mm]on[t]?go") or str:find("ћќЌ“ќћ≈–»") then
     obj_location = " в д. Montgomery"
-  elseif str:find("[Rr]ed") and str:find("[Cc]ount[r]?y") or str:find("RedCount[r]?y") or str:find("[–р]ед%s?[ к][ао][у]?нтри") or str:find("о.Red") or str:find("[ќо]круг[е]? [–р]ед") then
+  elseif str:find("[Rr]ed") and str:find("[Cc]o[u]?nt[r]?y") or str:find("RedCount[r]?y") or str:find("[–р]ед%s?[ к][ао][у]?нтри") or str:find("о.Red") or str:find("[ќо]круг[е]? [–р]ед") then
     obj_location = " в о. Red"
   elseif str:find("[Ff]lint") and str:find("[Cc]ount[r]?y") or str:find("[ф‘]линт") or str:find("о.Flint") or str:find("в%sFC%p") then
     obj_location = " в о. Flint"
@@ -361,7 +380,7 @@ function get_location(str)
     obj_location = " в р. Whitewood Estates"
   elseif str:find("[IiLl]dl[e]?wood") then
     obj_location = " в опасном р. Idlewood"
-  elseif str:find("[Pp]ri[n]?[c]?kl[e]?") or str:find("[ѕп]ри[кн]?[нк]?л") or str:find("[ѕп]ринцил") or str:find("%s[ѕп]райкс%s[ѕп]райн") or str:find("%sприк%s") or str:find("[Pp][r]?i[n]?[c]?[k]?le") or str:find("[Ћл][ к][Ќн]") or str:find("[Ll][CcKk][Nn]") or str:find("[»и]тал") and ("[ѕп]осольства") then
+  elseif str:find("[Pp]ri[n]?[c]?[kl][lk][e]?") or str:find("[ѕп]ри[кн]?[нк]?л") or str:find("[ѕп]ринцил") or str:find("%s[ѕп]райкс%s[ѕп]райн") or str:find("%sприк%s") or str:find("[Pp][r]?i[n]?[c]?[k]?le") or str:find("[Ћл][ к][Ќн]") or str:find("[Ll][CcKk][Nn]") or str:find("[»и]тал") and ("[ѕп]осольства") then
     obj_location = " в р. Prickle Pine"  
   elseif str:find("[Ee]l [Cc]orona") then
     obj_location = " в LS, р. El Corona"
@@ -371,13 +390,13 @@ function get_location(str)
     obj_location = " в д. Bayside"  
   elseif str:find("[Ww]hetstone") or str:find("[”у¬в]этстоун") then
     obj_location = " в р. Whetstone"
-  elseif str:find("[Qq]u[ea][a]?[br]") or str:find("[ к][аув]?[еа]?[бпр]?[пб]рад[оа]с") or str:find("[ к][аув]?[еа]?бардос") or str:find("[ к]арбенос") or str:find("[ к]вадрос")then
+  elseif str:find("[Qq][Uu][ea][a]?[br]") or str:find("[ к][аув]?[еа]?[бпр]?[пб]рад[оа]с") or str:find("[ к][аув]?[еа]?бардос") or str:find("[ к]арбенос") or str:find("[ к]вадрос")then
     obj_location = " в д. El Quebrados"  
   elseif str:find("[Tt][ea]mple") or str:find("[“т][еи]м[лп][лп][е]?") or str:find("“≈ћѕЋ") then
     obj_location = " в р. Temple" 
-  elseif str:find("(.-)нжел") or str:find("[ја]нг[е]?[й]?л [ѕп][а]?й") or str:find("[Ёэ]нджел") or str:find("[ја]нгел [ѕп][еаэи][йн][не]") or str:find("(.+)[Nnh]gel%p?%s?(.+)[ie][ni][en]") or str:find("(.+)ngel%p?(.+)ain")or str:find("[ƒд]еревн[€е] за [Ўш]ахтой") then
+  elseif str:find("(.-)н[д]жел") or str:find("[ја]нг[е]?[й]?л [ѕп][а]?й") or str:find("[Ёэ]нджел") or str:find("[ја]нгел [ѕп][еаэи][йн][не]") or str:find("(.+)[Nnh]gel%p?%s?(.+)[ie][ni][en]") or str:find("(.+)ngel%p?(.+)ain")or str:find("[ƒд]еревн[€е] за [Ўш]ахтой") then
     obj_location = " в д. Angel Pine"
-  elseif str:find("[ѕпPp][Kk к]") or str:find("[ѕп][ао]л[д]?[оа]м[ио][нк][оа]") or str:find("(.+)[ao]lo[nm]ino%p?%s?(.+)r[ei][eac]k") then
+  elseif str:find("[ѕпPp][Kk к]") or str:find("[ѕп][ао]л[д]?[оа]м[ио][нк][оа]") or str:find("(.+)[ao]lo[nm][n]?ino%p?%s?(.+)r[ei][e]?[eac][kc]") then
     obj_location = " в д. Palomino Creek"
   elseif str:find("[‘ф][ к]") or str:find("[‘ф]орт") or str:find("[ к][а][а]?рсон") or str:find("[ к]артсон") or str:find("(.+)or[td]%p?%s?%s?(.+)arso[n]?") then
     obj_location = " в д. Fort Carson"
@@ -393,7 +412,7 @@ function get_location(str)
     end
   elseif str:find("[Gg]ro[o]?ve [Ss]tre[e]?t") or str:find("[√г]рув [—с]трит") or str:find("[Gg]anton") or str:find("[Gg]roove") then
     obj_location = " в р. Ganton, ш. Los Santos"
-  elseif str:find("на горе вагос") or str:find("√оре ¬агос") or str:find("[“т]ер[ие]тории [¬в]агос") or str:find("[–р]еспа [¬в]агос")  then
+  elseif str:find("на горе вагос") or str:find("√оре ¬агос") or str:find("[“т]ер[ие]тории [¬в]агос") or str:find("%p[Vv]agos%p") or str:find("[–р]еспа [¬в]агос")  then
     obj_location = " в опасном р. Los Flores"
   elseif str:find("[х’]им") and str:find("[з«]авод") then
     obj_location = " у химического завода"
@@ -403,7 +422,7 @@ function get_location(str)
     obj_location = " в опасном р. Las Colinas"
   elseif str:find("[Gg]len [Pp]ark") or str:find("[√г]лен [ѕп]арк") then
     obj_location = " в опасном р. Glen Park"
-  elseif str:find("респе риф") or str:find("у рифы") then
+  elseif str:find("респе риф") or str:find("у рифы") or str:find("[Tt]he [Rr]ifa") then
     obj_location = " в опасном р. Playa de Seville"
   elseif str:find("[–р]есп[еи] [в¬]агос") or str:find("у [в¬]агос") then
     obj_location = " в опасном р. Las Colinas"
@@ -424,10 +443,14 @@ function house_number(str)
     h_number = " є"..str:match("є%s?(%d+)%p?")
   elseif str:find("дом є%d+$") then
     h_number = " є"..str:match("дом є(%d+)$")
+  elseif str:find("дом є%d+%s") then
+    h_number = " є"..str:match("дом є(%d+)%s")
   elseif str:find("[дƒ]ом N %d+") then
     h_number = " є"..str:match("[дƒ]ом N (%d+)")
   elseif str:find("номер%s%d+%p?%s") then
     h_number = " є"..str:match("номер%s(%d+)%p?%s")
+  elseif str:find("номер%s%d+$") then
+    h_number = " є"..str:match("номер%s(%d+)$")
   elseif str:find("клас[сc]а %d+ возле") then
     h_number = " є"..str:match("клас[сc]а (%d+) возле")
   elseif str:find("номером%s%d+%p?%s") then
@@ -492,16 +515,16 @@ end
 
 function ad_handler(str)
  --debug(str, 2)
-  if str:find("[—сCc][≈е]?ред[н€][€н]%s?к") or str:find("[—с]реднего") or str:find("[—с]ердный") or str:find("[^(–аботает)]%s[Ёэ]лит[кн][оауиы]") or str:find("ЁЋ»“ ") or str:find("[Ёэ]к[оа]номк[ау]") or str:find("[Ёэ]к[оа]ном") or str:find("[¬в]ысокий класс") or str:find("[—с]редний класс") then
+  if str:find("[—сCc][≈е]?ред[н€][€н]%s?к") or str:find("[—с]реднего") or str:find("[—с]ердный") or str:find("[^(–аботает)]%s[Ёэ]лит[кн][оауиы]") or str:find("ЁЋ»“ ") or str:find("[Ёэ]к[оа]номк[ау]") or str:find("[Ёэ]к[оа]ном[^ь]") or str:find("[¬в]ысокий класс") or str:find("[—с]редний класс") then
     -- debug("CATCHED", 3)
-    if str:find("[ја]ук") then
+    if str:find("[ја]у[кц]") then
        return auction(str)
     end
     return home_string(str, trade_type(str), get_house_type(str), get_house_class(str), get_house_repair(str), house_number(str), get_location(str))
   
-  elseif not str:find("pacey") and not str:find("[—с]имку") and not str:find("24%p7") and not str:find("роймат") and not str:find("[Gg][Pp][Ss]") and not str:find("адовых") and not str:find("[–р]иелт") and not str:find("[—с]кин") and not str:find("GPS 8%p2") and not str:find("антех") and str:find("%s[ƒд][;жл]?[ћмќоЋл][ћм—сќо]") or str:find("^[ƒд]ом%s") or str:find("^%W- дои$") or str:find("[ѕп]родам %pƒом") or str:find("%W+%pдом%s") or str:find("плю до в") or str:find("дамдом") or str:find("жильЄ") or str:find("%shouse") or str:find("картиру") or str:find("[¬в]илла") or str:find("%shome") or str:find("[¬в]иллу") or str:find("dom") or str:find("[с—]арай") or str:find("[ к]аварт") or str:find("%sкв%s") or str:find("[Ёэ]лит(.-) [–р]езид(.-)") or str:find("[Ўш]алаш") or str:find("[ћм]ини%pдом") or str:find("[¬в][ро]ем[€]?нк[уа]") or str:find("врем[е]?н€ку") or str:find("врем€ну") or str:find("¬–≈ћ≈ЌЌќ≈") or str:find("[¬в]рем[е€]н") or str:find("[ к][¬в][јаќо][“т]?[–р]") or str:find("%sхат") or str:find("[¬в][ао]гончик") or str:find("%sтрел") or str:find("[“т]рейл") or str:find("жилье") or str:find("мини%p?%s?дом") or str:find("плю дам") or str:find("дам [ја]партаменты") or str:find("[ѕп]оместье у озера") or str:find("vremenoe jilie") or str:find("[т“]ру[щш][ео]б[уыа]?") or str:find("[’х]ижин[ау]") or str:find("[ќо]соб[н€][€н]к") or str:find("избу") or str:find("[ћм]отель") then
+  elseif not str:find("[—с]ет") and not str:find("pacey") and not str:find("[—с]имку") and not str:find("24%p7") and not str:find("роймат") and not str:find("[Gg][Pp][Ss]") and not str:find("адовых") and not str:find("[–р]иелт") and not str:find("[—с]кин") and not str:find("GPS 8%p2") and not str:find("антех") and str:find("%s[ƒд][;жл]?[ћмќоЋл][ћм—сќо]") or str:find("^[ƒд]ом%s") or (str:find("[Ёэ]лит") and str:find("[ја]п[п]?арт")) or str:find("^%W- дои$") or str:find("[ѕп]родам %pƒом") or str:find("%W+%pдом%s") or str:find("плю до в") or str:find("дамдом") or str:find("жильЄ") or str:find("%shouse") or str:find("картиру") or str:find("[¬в]илла") or str:find("%shome") or str:find("[¬в]иллу") or str:find("dom") or str:find("[с—]арай") or str:find("[ к]аварт") or str:find("%sкв%s") or str:find("[Ёэ]лит(.-) [–р]езид(.-)") or str:find("[Ўш]алаш") or str:find("[ћм]ини%pдом") or str:find("[¬в][ро]ем[€]?нк[уа]") or str:find("врем[е]?н€ку") or str:find("врем€ну") or str:find("¬–≈ћ≈ЌЌќ≈") or str:find("[¬в]рем[е€]н") or str:find("[ к][¬в][јаќо][“т]?[–р]") or str:find("%sхат") or str:find("[¬в][ао]гончик") or str:find("%sтрел") or str:find("[“т]рейл") or str:find("жилье") or str:find("мини%p?%s?дом") or str:find("плю дам") or str:find("дам [ја]партаменты") or str:find("[ај]парты") or str:find("[ѕп]оместье у озера") or str:find("vremenoe jilie") or str:find("[т“]ру[щш][ео]б[уыа]?") or str:find("[’х]ижин[ау]") or str:find("[ќо]соб[н€][€н]к") or str:find("избу") or str:find("[ћм]отель") then
     --debug("HATA", 5)
-    if str:find("[ја]ук") or str:find("[Ќн]а аук[е]?") or str:find("[ја]ууционе") then
+    if str:find("[ја]у[кц]") or str:find("[Ќн]а аук[е]?") or str:find("[ја]ууционе") then
       house_type = get_house_type(str)
       
       --debug("AUCTION | "..str, 3)
@@ -543,7 +566,7 @@ function ad_handler(str)
       end
     end
     return "ѕродам бизнес \"Ќижний ’иппи\""..get_location(str)..". "..get_price(str, trade_type(str))
-  elseif str:find("[Ћл]юб[оа][й€] [ћм]арк[иа]") or str:find("[ к]уплю [ај]втомобиль%s?%p?$") or str:find("[Ћл]юб[оа][й€] [Ff‘ф][Tt“т]") or str:find("[Ff‘ф][Tt“т] автомобиль") or str:find("любое авто") or str:find("[ к]уплю авто%p") or str:find("[ к]уплю [ћм]аш[иы]н[уы]%p?$") or str:find("[ к]уплю [ћм]аш[иы]ну [Ѕб]юд") or str:find("вертолЄт%.") or str:find("самол[еЄ]т любой") then
+  elseif str:find("[Ћл]юб[оа][й€] [ћм]арк[иа]") or str:find("[ к]уплю [ај]втомобиль%s?%p?$") or str:find("[Ћл]юб[оа][й€] [Ff‘ф][Tt“т]") or str:find("[Ff‘ф][Tt“т] автомобиль") or str:find("люб[оу][ею] [(авто)|(тачку)]") or str:find("[ к]уплю авто%p") or str:find("[ к]уплю [ћм]аш[иы]н[уы]%p?$") or str:find("[ к]уплю [ћм]аш[иы]ну [Ѕб]юд") or str:find("вертолЄт%.") or str:find("самол[еЄ]т любой") then
     if str:find("[¬в]ерт") or str:find("воздуш") or str:find("вертолЄт%.") then
       return " уплю вертолЄт любой марки. "..get_price(str, trade_type(str))
     elseif str:find("[—с]амол") and str:find("[Ћл]юб") then
@@ -570,8 +593,10 @@ function ad_handler(str)
     return vechicles(str, trade_type(str), "автомобиль", "Sultan")
   elseif str:find("[Bb][Ff]") or str:find("[Ii]njection") or str:find("[Ѕб][‘ф]") then 
     return vechicles(str, trade_type(str), "автомобиль", "BF Injection")
-  elseif str:find("[мћ][еоа]в[ае]р") or str:find("маврик") or str:find("aver[r]?i[c]?[kc]") or str:find("мавик") or str:find("mavik") or str:find("ав[ео][р]?ик") or str:find("averiс") then 
+  elseif str:find("[мћ][еоа]?в[ае]р") or str:find("маврик") or str:find("a[vw]er[r]?i[c]?[kc]") or str:find("мавик") or str:find("mavik") or str:find("ав[ео][р]?ик") or str:find("averiс") then 
     return vechicles(str, trade_type(str), "вертолЄт", "Maverick")
+  elseif str:find("[zZ«з][rR–р]%p?%s?2000") then 
+    return vechicles(str, trade_type(str), "автомобиль", "ZR-2000")
   elseif str:find("zrx") or str:find("zrx 350") or str:find("zrx-350") or str:find("ZRX") or str:find("[Zz][Rr]") or str:find("ZRX-350") or str:find("ZRX 350") then 
     return vechicles(str, trade_type(str), "автомобиль", "ZRX-350")
   elseif str:find("ul[l]?et") or str:find("[Ѕб]улк[уа]") or str:find("[Ѕб]ул[реи]т") or str:find("[Ѕб]улл[л]?[еи]т") then
@@ -580,8 +605,10 @@ function ad_handler(str)
     return vechicles(str, trade_type(str), "автомобиль", "Premier")
   elseif str:find("[Ee]legant") or str:find("[≈еЁэ]легант") then
     return vechicles(str, trade_type(str), "автомобиль", "Elegant")
-  elseif str:find("[Rr]emington") or str:find("[–р]емин[г]?тон") then
+  elseif str:find("[Rr][ea]mington") or str:find("[–р]емин[г]?тон") then
     return vechicles(str, trade_type(str), "автомобиль", "Remington")
+  elseif str:find("[Ee]speran[td]o") or str:find("[≈еЁэ]сперанто") then
+    return vechicles(str, trade_type(str), "автомобиль", "Esperanto")
   elseif str:find("[Ww]il[l]?ard") or str:find("[¬”ву]ил[л]?ард") then
     return vechicles(str, trade_type(str), "автомобиль", "Willard")
   elseif str:find("[Ss][ea]nti[n]?el") or str:find("[—с]ентинел") then
@@ -606,6 +633,8 @@ function ad_handler(str)
     return vechicles(str, trade_type(str), "автомобиль", "Huntley")
   elseif str:find("[Ll]andstalker") or str:find("[Ћл][аэ]н[д]?сталкер") then
     return vechicles(str, trade_type(str), "автомобиль", "Landstalker")
+  elseif str:find("[“т][÷ц]?[”у][–р][»и][ к]%s?+") or str:find("[“т]ури[зс]м[ао]%s?+") or str:find("[Tt][UuYy]ri[sz]mo%s?+") then
+    return vechicles(str, trade_type(str), "автомобиль", "Turismo +")
   elseif str:find("[“т][÷ц]?[”у][–р][»и][ к]") or str:find("[“т]ури[зс]м[ао]") or str:find("[Tt][UuYy]ri[sz]mo") then
     return vechicles(str, trade_type(str), "автомобиль", "Turismo")
   elseif str:find("[Cc]adrona") or str:find("[ к]адрона") then
@@ -638,6 +667,8 @@ function ad_handler(str)
     return vechicles(str, trade_type(str), "автомобиль", "S.W.A.T")
   elseif str:find("[Ee]uros") or str:find("[≈еЁэ][ув]рос") then
     return vechicles(str, trade_type(str), "автомобиль", "Euros")
+  elseif str:find("[Gg]re[e]?n[wv]") or str:find("[√г][р]инвуд") then
+    return vechicles(str, trade_type(str), "автомобиль", "Greenwood")
   elseif str:find("[Ss]avan") or str:find("[—с]аван") then
     return vechicles(str, trade_type(str), "автомобиль", "Savanna")
   elseif str:find("[Ff]ortune") or str:find("[Ff]ORTUNE") or str:find("[‘ф]орт") and not str:find("[Pp]rice") then
@@ -650,7 +681,7 @@ function ad_handler(str)
     return vechicles(str, trade_type(str), "автомобиль", "Blade")
   elseif str:find("[Vv]oodoo") or str:find("[¬в]уду") then
     return vechicles(str, trade_type(str), "автомобиль", "Voodoo")
-  elseif str:find("[Mm]onster") or str:find("[ћм]%s?онст[еа]?[р]?") or str:find("MONSTER") or str:find("ћќЌ—“[≈]?–") then
+  elseif str:find("[Mm]onst[e]?r") or str:find("[ћм]%s?онст[еа]?[р]?") or str:find("MONSTER") or str:find("ћќЌ—“[≈]?–") then
     return vechicles(str, trade_type(str), "автомобиль", "Monster A")
   elseif str:find("[Ss]lamvan") or str:find("[—с]л[аеэ]мв[аеэ]н") then
     return vechicles(str, trade_type(str), "автомобиль", "Slamvan")
@@ -658,6 +689,8 @@ function ad_handler(str)
     return vechicles(str, trade_type(str), "автомобиль", "Moonbeam")
   elseif str:find("[Rr][ua][mnp][mp]o") or str:find("[–р][уа][мн]по") then
     return vechicles(str, trade_type(str), "автомобиль", "Rumpo")
+  elseif str:find("[Bb]ob[ckKC][ea]t") or str:find("[Ѕб]обк[аеэ]т") then
+    return vechicles(str, trade_type(str), "автомобиль", "Bobcat")
   elseif str:find("[Rr]omero") or str:find("[–р]омеро") then
     return vechicles(str, trade_type(str), "автомобиль", "Romero")
   elseif str:find("[WwVv]indsor") or str:find("[¬в]инд[зс]ор") then
@@ -680,7 +713,7 @@ function ad_handler(str)
     return vechicles(str, trade_type(str), "автомобиль", "Glendale")
   elseif str:find("[Ff][BbIi][BbIiRr]%s?%p?[Rr][n]?a[cn][ncs]?[hn]e[rl]") or str:find("F[BI][BRI] RANCHER") or str:find("‘Ѕ[»–] –јЌ[≈]?[„÷]≈–") or str:find("ф[би][бирл] [–р][ае]?[ач]?н[е]?[чр]") or str:find("[–р][ае]н[цч]ер [‘ф][Ѕб][–р»и]") then
     return vechicles(str, trade_type(str), "автомобиль", "FBI Rancher")
-  elseif str:find("[Ff][BbIi][BbIiRr]%s?%p?[Tt]r[ua]ck") or str:find("[‘ф][Ѕб»и][Ѕб»и–р] [“т]р[ау][к]?") then
+  elseif str:find("[Ff][BbIi][BbIiRr]%s?%p?[Tt]r[ua]ck") or str:find("[‘ф][Ѕб»и][Ѕб»и–р] [“т]р[ау][к]?") or str:find("F[BI][IBR] TRUCK") then
     return vechicles(str, trade_type(str), "автомобиль", "FBI Truck")
   elseif str:find("[Rr]an[cs][hn]e[rl]") or str:find("[–р]а[ч]?н[чц]ер") then
     return vechicles(str, trade_type(str), "автомобиль", "Rancher")
@@ -702,6 +735,8 @@ function ad_handler(str)
     return vechicles(str, trade_type(str), "автомобиль", "Comet")
   elseif str:find("[—с]тратум") or str:find("[Ss]tratum") then
     return vechicles(str, trade_type(str), "автомобиль", "Stratum")
+  elseif str:find("[Ѕб]ур[р]?ит[т]?о") or str:find("[Bb]ur[r]?it[t]?o") then
+    return vechicles(str, trade_type(str), "автомобиль", "Burrito")
   elseif str:find("[Bb]andit") or str:find("[Ѕб]агги") or str:find("[Ѕб]андит[т]?о") and not str:find("кеан") then
     return vechicles(str, trade_type(str), "автомобиль", "Bandito")
   elseif str:find("[Ўш]амал") or str:find("hamal") or str:find("шаман") or str:find("[Ss]hama[nl]") then
@@ -710,7 +745,7 @@ function ad_handler(str)
     return vechicles(str, trade_type(str), "самолЄт", "Nevada")
   elseif str:find("[Rr]ustler") or str:find("[–р][ау]с[т]?лер") then
     return vechicles(str, trade_type(str), "самолЄт", "Rustler")
-  elseif str:find("[Aa]ndrom[ae]da") or str:find("[ја]ндр[оа]м[аеэ]д[ау]") then
+  elseif str:find("[Aa][n]?drom[ae]da") or str:find("[ја]ндр[оа]м[аеэ]д[ау]") then
     return vechicles(str, trade_type(str), "самолЄт", "Andromada")
   elseif str:find("[Bb]eagle") or str:find("[Ѕб][ие][а]?гл") then
     return vechicles(str, trade_type(str), "самолЄт", "Beagle")
@@ -720,13 +755,13 @@ function ad_handler(str)
     return vechicles(str, trade_type(str), "самолЄт", "Dodo")
   elseif str:find("t[au]n(.*)%s?[Pp]la[(ne)|(y)]") or str:find("tun[t]?%s?[Pp]la[(ne)|(y)]") or str:find("—“јЌ“ѕ%s?Ћ(.+)Ќ") or str:find("[—с]тан[тд]%s?[ѕп]л(.+)") then
     return vechicles(str, trade_type(str), "самолЄт", "Stuntplane")
-  elseif str:find("сперроу") or str:find("спароу") or str:find("a[r]?row") or str:find("[Ss]appraw") or str:find("сперов") or str:find("спар[р]?ов") or str:find("—ѕј–[–]?ќ¬") then
+  elseif not str:find("[Gg√г∆ж][Ppѕп][Ss—с]") and (str:find("сперроу") or str:find("спар[р]?оу") or str:find("a[r]?row") or str:find("[Ss]appraw") or str:find("сперов") or str:find("спар[р]?ов") or str:find("—ѕј–[–]?ќ¬")) then
     return vechicles(str, trade_type(str), "вертолЄт", "Sparrow")
-  elseif str:find("[Rr]ain[e]?dance") or str:find("[–р]ейнда") then
+  elseif str:find("[Rr][ae]in[e]?d[ea]nc[c]?e") or str:find("[–р]ейнда") then
     return vechicles(str, trade_type(str), "вертолЄт", "Raindance")
   elseif str:find("[Ll]ev[ie]athan") or str:find("[Ћл]евиа[тф]ан") then
     return vechicles(str, trade_type(str), "вертолЄт", "Leviathan")
-  elseif str:find("arq[ui][ie]s") or str:find("маркиз") or str:find("маркис") then
+  elseif str:find("arq[ui][ie]?s") or str:find("маркиз") or str:find("[мћ]арки[”у]?с") then
     return vechicles(str, trade_type(str), "€хту", "Marquis")
   elseif str:find("[Tt]ropic") or str:find("[“т]ропик") then
     return vechicles(str, trade_type(str), "€хту", "Tropic")
@@ -734,7 +769,7 @@ function ad_handler(str)
     return vechicles(str, trade_type(str), "судно", "Vortex")
   elseif str:find("[Ss]peader") or str:find("[—с]пидер") then
     return vechicles(str, trade_type(str), "судно", "Speader")
-  elseif str:find("[Rr]e[ae]fer") or str:find("[–р]ифер") then
+  elseif str:find("[Rr]e[ae]?fe[e]?r") or str:find("[–р]ифер") then
     return vechicles(str, trade_type(str), "судно", "Reefer")
   elseif str:find("[Dd]ingh[iy]") or str:find("[ƒд]инги") then
     return vechicles(str, trade_type(str), "судно", "Dinghy")
@@ -742,10 +777,12 @@ function ad_handler(str)
     return vechicles(str, trade_type(str), "судно", "Jetmax")
   elseif str:find("[Ss]qual[l]?o") or str:find("[—с]куало") then
     return vechicles(str, trade_type(str), "судно", "Squallo")
-  elseif str:find("[Ss]pe[e]?der") or str:find("[—с]пидер") then
+  elseif str:find("[Ss]pe[e]?de[e]?r") or str:find("[—с]пидер") then
     return vechicles(str, trade_type(str), "судно", "Speeder")
-  elseif str:find("heetah") or str:find("читах") or str:find("итах") or str:find("читу") or str:find("чейтах") then
+  elseif str:find("heeta[c]?h") or str:find("читах") or str:find("итах") or str:find("читу") or str:find("чейтах") then
     return vechicles(str, trade_type(str), "автомобиль", "Cheetah")
+  elseif str:find("nf[er][er]nus%s?+") or str:find("н[ф]?е[ру][нр][ун]с%s?+") or str:find("инф[ау]") or str:find("[Ii]nf[eu](.-)s%s?+") or str:find("[и»][Ќн][‘ф][≈е][–р]%s?+") or str:find("инф[р]?енус%s?+") or str:find("INFERNUS%s?+") then
+    return vechicles(str, trade_type(str), "автомобиль", "Infernus +")
   elseif str:find("nf[er][er]nus") or str:find("н[ф]?е[ру][нр][ун]с") or str:find("инф[ау]") or str:find("[Ii]nf[eu](.-)s") or str:find("[и»][Ќн][‘ф][≈е][–р]") or str:find("инф[р]?енус") or str:find("INFERNUS") or str:find("%s»Ќ‘ј%s") or str:find("infa") then
     return vechicles(str, trade_type(str), "автомобиль", "Infernus")
   elseif str:find("от%s?ри[н]?г [¬вЅбbB]") or str:find("o[r]?t[r]?ing [¬вBb¬в]") or str:find("otring B") or str:find("[’х]отр[(инг)]? [ЅбBb¬в]") or str:find("[aа][cс][eе][rр] [Bb¬вЅб]") or str:find("acer B") or str:find("[–р]ейсер [Ѕб]") then
@@ -756,11 +793,12 @@ function ad_handler(str)
     return vechicles(str, trade_type(str), "автомобиль", "Hotring Racer")
   elseif str:find("[Bb]l[o]?odring [Bb]anger") or str:find("BLOODRING BANGER") or str:find("[Ѕб]лудринг") then
     return vechicles(str, trade_type(str), "автомобиль", "Bloodring Banger")
-  elseif not str:find("[Ћл]ичным") and str:find("”строюсь") or str:find("[“т]ранспортн[(ую)|(ои)]") or str:find("%s[“т][ к]%s?") or str:find("дальнобой") or str:find("%sтк%s") and not str:find("сутки") then
+  elseif not str:find("[Ћл]ичным") and not str:find("[Gg][Pp][Ss]") and (str:find("”строюсь") or str:find("[“т]ранспортн[(ую)|(ои)]") or str:find("%s[“т][ к]%s?") or str:find("дальнобой") or str:find("%sтк%s") and not str:find("сутки")) then
     if str:find("»щу человека") or str:find("[»и]щу напарника") then
       return "»щу напарника дл€ совместного труда в трансп. компании. «воните!"
+    else
+      return "»щу работу в транспортной компании. ∆ду звонков."
     end
-    return "»щу работу в транспортной компании. ∆ду звонков."
   elseif str:find("[Ћл]ичн[ыо][гм](.-) [¬в]одител") then
     return "ѕредоставл€ю услуги личного водител€. «воните."
   
@@ -1681,28 +1719,6 @@ function ad_handler(str)
       return "Ћучшие VIP номера только в ѕиратской гостинице. | "..biz_loc
     
     end
-  elseif str:find("[ќоHh][тo][еt][eл][lье]") and str:find("ќкеан") or str:find("[Oo]cean") or str:find("ќкеан") then
-    if str:find("[Pp]rice") then
-      biz_loc = "Price 9-2"
-    elseif str:find("[Gg][Pp][Ss]") then
-      biz_loc = "GPS 8-54"
-    end
-    debug("OKEAN BLA"..str, 1)
-    if str:find("[ѕп]родам") then
-      return "ѕродам гостинницу ЂOceanї в ш. Los Santos. "..get_price(str, trade_type(str))
-    elseif str:find("экономный") then
-      return "—амый экономный отель є1 в ш.Los-Santos Ђќкеанї | "..biz_loc
-    elseif str:find("бандитов") then
-      return "ќтель Ђќкеанї ждет своих бандитов! "..get_hotel_price(str).."$/сутки | "..biz_loc
-    elseif str:find("ѕроживание в отеле") then
-      return "ѕроживание в отеле Ђќкеанї всего лишь "..get_hotel_price(str).."$/сутки | ∆дем в "..biz_loc
-    elseif str:find("открытa дл€ всех") then
-      return "√остиница Ђќкеанї открытa дл€ всех. ѕроживание "..get_hotel_price(str).."$/сутки "..biz_loc
-    elseif str:find("ера в Hotel") then
-      return "ƒоступные VIP-номера в ЂOcean Hotelї LS - "..get_hotel_price(str).."$/ночь! | "..biz_loc
-    elseif str:find("—амые выгодные") then
-      return "—амые выгодные ЂVIPї номера в гостинице Ђќкеанї! | "..biz_loc
-    end
   elseif str:find("етрах") then
     return "ѕриобрети новогодние Єлки в Ђ—ад. центрах LS/LVї | GPS 8-271/272"
   elseif str:find("[—с][ја]д") and str:find("[LlЋл][Ss—с]") and str:find("[LlЋл][Vv¬в]") then
@@ -1802,46 +1818,7 @@ function ad_handler(str)
       return "ѕродам магазин игрушек ЂSpaceyї GPS 8-10. "..get_price(str, trade_type(str))
     end
     
-  elseif str:find("[Pp]rice") and str:find("%s?11%s?%p%s?4") or str:find("8%s?%p?%s?270$") or str:find("[Ќн]омерн(.-) [«з]наки") or str:find("номера только в —‘") or str:find("очешь круты[е]? номера") or str:find("уникальные номера") or str:find("[Ќн]омера на машину") then
-    --debug("+", 5)
-    if str:find("[Pp]rice") then
-      biz_loc = "Price 9-2"
-    elseif str:find("[Gg][Pp][Ss]") then
-      biz_loc = "GPS 8-270"
-    end
-    if str:find("[ѕп]родам") then
-      return "ѕродам бизнес ЂЌомерные знакиї в ш. San Fierro. "..get_price(str, trade_type(str))
-    elseif str:find("себе крутые номерные") then
-      return "’очешь себе крутые номерные знаки? “огда тебе к нам! "..biz_loc
-    elseif str:find("низкие цены на") then
-      return "—амые низкие цены на номерные знаки только у нас! "..biz_loc
-    elseif str:find("номера только в —‘") then
-      return "—амые уникальные номера только в ЂЌомерных знаках SFї. "..biz_loc
-    elseif str:find("свои уникальные номера") then
-      return "—делай свои уникальные номера! ¬сего за 3000$. | "..biz_loc
-    elseif str:find("уникальные номера") then
-      return "ѕоставь уникальные номера в San Fierro! | "..biz_loc
-    elseif str:find("на машину всего за") then
-      return "Ќовые номера на машину всего за 3000$? | “олько в "..biz_loc
-    elseif str:find("Ќомера по демократичным ценам") then
-      return "Ќомера по демократичным ценам в Price 11-4. ¬ход - 0$!"
-    elseif str:find(" озырной номер дл€") then
-      return " озырной номер дл€ ласточки в ЂЌомерных знаках SFї. | "..biz_loc
-    elseif str:find("Aдекватные цены на номера") then
-      return "Aдекватные цены на номера в ЂЌомерных знаках SFї. | "..biz_loc
-    elseif str:find("÷ветные номера") then
-      return "÷ветные номера на авто в ЂЌомерных знаках SFї. | "..biz_loc
-    elseif str:find("—делай красивый номер в") then
-      return "—делай красивый номер в ЂЌомерных знаках SFї. | "..biz_loc
-    elseif str:find("ѕусть знают чь€ лошадка") then
-      return "ѕусть знают чь€ лошадка! ЂЌомерные знаки SFї. | "..biz_loc
-    elseif str:find("очешь круты[е]? номера?") then
-      if str:find("церкв") then
-        return "’очешь крутые номера? “ебе в номерные знаки SF! ћы р€дом с церквью SF"
-      end
-      return "’очешь крутые номера? 3000$ и они твои! | "..biz_loc
-    end  
-  elseif str:find("[Pp]rice") and str:find("%s?11%s?%p%s?4") or str:find("8%s?%p?%s?197") or str:find("[Ќн]омерн(.-) [«з]наки") or str:find("номера только в Ћ¬") then
+  elseif str:find("[Pp]rice") and str:find("%s?11%s?%p%s?4") or str:find("8%s?%p?%s?197") or (str:find("[Ќн]омерн(.-) [«з]наки") and not str:find("[Ћл][—с]"))  or str:find("номера только в Ћ¬") then
     --debug("+", 5)
     if str:find("[Pp]rice") then
       biz_loc = "Price 11-3"
@@ -1962,27 +1939,7 @@ function ad_handler(str)
     elseif str:find("Ћучшие VIP номера") then
       return "Ћучшие VIP номера за "..get_hotel_price(str).."$ только в ќ“≈Ћ≈ VISAGE | GPS 8-232"
     end
-  elseif str:find("[Pp]rice%s%p?%s?9%s?%p%s?3") or str:find("%s?8%s?%p%s?118")  then
-    if str:find("[Pp]rice") then
-      biz_loc = "Price 9-2"
-    elseif str:find("[Gg][Pp][Ss]") then
-      biz_loc = "GPS 8-118"
-    end
-    if str:find("любовни") then
-      return "ќтель Ђ—ан-‘иеррої - порадуй себ€ и свою любовницу | "..biz_loc
-    elseif str:find("новогодние скидки") then
-      return "¬ ќтеле Ђ—ан-‘иеррої новогодние скидки - 333$/сутки | "..biz_loc
-    elseif str:find("[”у]ютные номера ждут теб€") then
-      return "”ютные номера ждут теб€ в отеле Ђ—ан-‘иеррої | "..biz_loc
-    elseif str:find("—вободные номера всего") then
-      return "—вободные номера всего по 350$ в отеле Ђ—ан-‘иеррої | "..biz_loc
-    elseif str:find("ѕрезидентский LUXE") then
-      return "ѕрезидентский LUXE-номер в ќтеле ЂSan Fierroї за "..get_hotel_price(str).."$ | "..biz_loc
-    elseif str:find("Ќомера по") then
-      return "Ќомера по "..get_hotel_price(str).."$ только в Ђќтеле San Fierroї | "..biz_loc
-    else
-      return "¬ ќтеле Ђ—ан-‘иеррої номера от "..get_hotel_price(str).."$/сутки. ∆дЄм теб€ | "..biz_loc
-    end
+  
   elseif str:find("[Pp]rice%s8%s?%p%s?3$") or str:find("lexande") and str:find("[Tt]oys") then
     if str:find("адиоуправл€емый вертолет") then
       return " упи радиоуправл€емый вертолет в ЂAlexander's Toysї | Price 8-3"
@@ -2029,39 +1986,7 @@ function ad_handler(str)
     elseif str:find("рендова€ одежда") then
       return "Ѕрендова€ одежда от 7.000$ в магазине ЂBinco Groveї. ћы в GPS 8-6"
     end
-    
-  elseif str:find("8%s?%p?%s?79[($)|(!)]") and str:find("[Gg][Pp][Ss]") then
 
-    if str:find("ультрамодна€ коллекци€") then
-      return "Ќова€ ультрамодна€ коллекци€ ассортимента в Sub Urban. GPS 8-79"
-    elseif str:find("удивить своих") then
-      return "’очешь удивить своих братков? «аходи в Sub Urban. GPS 8-79"
-    elseif str:find("смелых и €рких") then
-      return "Sub Urban - стиль дл€ смелых и €рких! GPS 8-79"
-    elseif str:find("одевайтесь с душой") then
-      return "Sub Urban - одевайтесь с душой! GPS 8-79"
-    elseif str:find("уникальный стиль дл€") then
-      return "Sub Urban - уникальный стиль дл€ городской жизни! GPS 8-79"
-    elseif str:find("“олько сегодн€") then
-      return "“олько сегодн€! —кидки на одежду в Sub Urban. GPS 8-79"
-    elseif str:find("[ѕп]родам") then
-      return "ѕродам ЂSub Urbanї в ш. Los Santos по GPS 8-79. "..get_price(str, trade_type(str))
-    elseif str:find("Ѕольшие скидки") then
-      return "Ѕольшие скидки на одежду от владельца. GPS 8-79"
-    elseif str:find("Ѕрендова€ одежда") then
-      return "Ѕрендова€ одежда в ЂSub Urbanї. —тиль это наше! | GPS 8-79"
-    elseif str:find("ќбновите свой гардероб") then
-      return "ќбновите свой гардероб в магазине ЂSub Urbanї в LS. | GPS 8-79"
-    elseif str:find("ќдежда всего от") then
-      return "ќдежда всего от 7.000$ в магазине ЂSub Urbanї в LS. | GPS 8-79"
-    end
-  -- elseif str:find("Sub Urban") or str:find("5%s?%p?%s?16[($)|(!)]") and str:find("[Pp]rice") then
-  --   if str:find("Ќизкие цены в магазине") then
-  --     return "Ќизкие цены в магазине одежды Sub Urban ЂPalominoї | Price 5-16"
-  --   elseif str:find("удивить своих") then
-  --     return "’очешь удивить своих братков? «аходи в Sub Urban. GPS 8-79"
-  --   end
-    
   elseif str:find("8%s?%p?%s?111") and str:find("[Gg][Pp][Ss]") then
     if str:find("—тильна€ одежда") then
       return "—тильна€ одежда от 7.000$ в ЂBincoї г.San Fierro | ∆дем в GPS 8-111"
@@ -2578,7 +2503,7 @@ function ad_handler(str)
   elseif not str:find("[—с][им][ми] [ к]арту") and not str:find("у мор€") and not str:find("sim") and not str:find("[—с][и»][ћм]") and not str:find("S[Ii][Mm]") and str:find("[^(мед)]карт") or str:find("Cart") or str:find("Kart") or str:find("cart") or str:find("kart") then
     -- debug("Kart eb...", 4)
     return vechicles(str, trade_type(str), "автомобиль", "Kart")
-  elseif str:find("с[у]?[им][им]ку") or str:find("[—с][и»][ћм][(%p)|(карту)]") or str:find("[—с][ћм][»и] [ к]арту") or str:find("[Ss][Iil]m") or str:find("%s[—с]им%s") or str:find("SIM") or str:find("смку") or str:find("одам номер") or str:find("4 значный номер") then -- ƒ–”√ќ≈
+  elseif not str:find('[«з]наки') and (str:find("с[у]?[им][им]ку") or str:find("[—с][и»][ћм][(%p)|(карту)]") or str:find("[—с][ћм][»и] [ к]арту") or str:find("[Ss][Iil]m") or str:find("%s[—с]им%s") or str:find("SIM") or str:find("смку") or str:find("одам номер") or str:find("4 значный номер")) then -- ƒ–”√ќ≈
     --формата "XY-XXXX".
     if str:find("[ к][у]?п[а]?л[д]?ю") and str:find("[ к]расив") then
       return " уплю SIM-карту красивого формата. "..get_price(str, trade_type(str))
@@ -2656,7 +2581,7 @@ function ad_handler(str)
       if str:find("«аправьс€ быстро и качественно") then
         return "«аправьс€ быстро и качественно на ј«— Ђ«аводска€ї | GPS 5-4"
       end
-    elseif str:find("ёжна€") or str:find("ёжном") then
+    elseif str:find("ёжна€") or str:find("ёжном") or str:find('ёжную') then
       if str:find("у нас лучша") then
         return "Ћучшее топливо в ј«— Ђёжна€ї - у нас лучша€ цена | Fuel - 4"
       elseif str:find("«аправь авто качественным") then
@@ -2665,6 +2590,8 @@ function ad_handler(str)
         return "«аправь свой трактор на ј«— Ђёжна€ї | Fuel - 4"
       elseif str:find("’очешь гон€ть как Vin Dizel") then
         return "’очешь гон€ть как Vin Dizel? «аправл€йс€ на ј«— Ђёжна€ї: Fuel - 4"
+      elseif str:find("[пѕ]род") then
+        return "ѕродам Ђёжную ј«— є4ї возле д. Angel Pine. "..get_price(str, trade_type(str))
       end
     elseif str:find("[fF]uel 13") then
       if str:find("ѕокупаем, заливаем") then
@@ -2673,12 +2600,9 @@ function ad_handler(str)
     elseif str:find("[ѕп]рези[н]?дента") then
       if str:find("10л") then
         return "Ћучшее топливо на ј«— у јдмин. ѕрезидента! | 10л-50$ | Fuel 1"
-      elseif str:find("1л%p?(.-)%s?%p%s?5%$") then
-        return "Ћучшее топливо на ј«— у јдминистрации ѕрезидента | 1л-5$ | Fuel-1"
       elseif str:find("[ѕп]родам") then
         return "ѕродам ј«— возле јдминистрации ѕрезидента. "..get_price(str, trade_type(str))
       end
-      return "Ћучшее топливо только на ј«— у јдминистрации ѕрезидента: 1л.-5$"
     elseif str:find("[ к][”у][ѕп][Ћл][ёю]") then
       return string.format(" уплю автозаправочную станцию%s. %s", get_location(str), get_price(str, trade_type(str)))
     end
@@ -2706,6 +2630,8 @@ function ad_handler(str)
     return action[trade_type(str)].."аксессуар Ђ амера на плечеї. "..get_price(str, trade_type(str))
   elseif str:find("[Ћл]ук") then
     return action[trade_type(str)].."аксессуар ЂЋукї. "..get_price(str, trade_type(str))
+  elseif str:find("[ к]леш") and str:find("[ к]ра") then
+    return action[trade_type(str)].."аксессуар Ђ лешни крабаї. "..get_price(str, trade_type(str))
   elseif str:find("[ч„]ереп") then
     return action[trade_type(str)].."аксессуар Ђ√ор€щий черепї. "..get_price(str, trade_type(str))
   elseif str:find("[«з]л[ао][€йе]") and str:find("[ѕп][е≈]чен") then
@@ -2714,10 +2640,16 @@ function ad_handler(str)
     return action[trade_type(str)].."аксессуар ЂЅольша€ бомба с фитилЄмї. "..get_price(str, trade_type(str))
   elseif str:find("[√г]ол[л]?а") and str:find("[Ўш]турв") then
     return action[trade_type(str)].."аксессуар Ђ√олландский штурвалї. "..get_price(str, trade_type(str))
-  elseif str:find("[ƒд]окт") and str:find("[—с]тр[эе]") or str:find("[ѕп]лащ") then
+  elseif str:find("[ƒд]окт") and str:find("[—с]тр[эе]") or str:find("[ѕп][Ћл][ја][ўщ]") then
     return action[trade_type(str)].."аксессуар Ђѕлащ ƒоктора —трэнджаї. "..get_price(str, trade_type(str))
   elseif str:find("[Ћл]азер") and str:find("[Ќн]аруч") then
     return action[trade_type(str)].."аксессуар ЂЌаручные лазерные резакиї. "..get_price(str, trade_type(str))
+  elseif str:find("[Ѕб]оч") and str:find("[“т]ок[сч]") then
+    return action[trade_type(str)].."аксессуар ЂЅочка с токсическими отходамиї. "..get_price(str, trade_type(str))
+  elseif str:find("[ћм]ар[жд]") and str:find("[—с]им[пс]") then
+    return action[trade_type(str)].."аксессуар Ђћардж —импсонї. "..get_price(str, trade_type(str))
+  elseif str:find("[ѕп]ос") and str:find("[ƒд]р[оу]") then
+    return action[trade_type(str)].."аксессуар Ђѕосох ƒруидаї. "..get_price(str, trade_type(str))
   elseif str:find("[Ћл]азер") then
     return action[trade_type(str)].."аксессуар ЂЋазерї. "..get_price(str, trade_type(str))
   elseif str:find("[ѕп][ќјоа][пѕ][”у][√г]") then
@@ -2732,11 +2664,13 @@ function ad_handler(str)
     return action[trade_type(str)].."аксессуар Ђћаска Єжикаї. "..get_price(str, trade_type(str))
   elseif str:find("[ѕп]ч[еЄ]л[к]?а") then
     return action[trade_type(str)].."аксессуар Ђѕчелаї. "..get_price(str, trade_type(str))
-  elseif str:find("[бЅ]ел[уа][€ю] [√г]итар[ау]") then
+  elseif str:find("[бЅ]ел[уао][€ю] [√г]итар[ау]") then
     return action[trade_type(str)].."аксессуар ЂЅела€ гитараї. "..get_price(str, trade_type(str))
-  elseif str:find("[ч„][еЄ]рн[уа][€ю] [√г]итар[ау]") then
+  elseif str:find("[ч„][еоЄ]рн[уа][€ю] [√г]итар[ау]") then
     return action[trade_type(str)].."аксессуар Ђ„Єрна€ гитараї. "..get_price(str, trade_type(str))
-  elseif str:find("[ч„][еЄ]рн[уа][€ю] [ к]епк[ау]") then
+  elseif str:find("[√г]итар[ау]") and str:find("[ к]рас") then
+    return action[trade_type(str)].."аксессуар Ђ расна€ гитараї. "..get_price(str, trade_type(str))
+  elseif str:find("[ч„][еЄ]рн[уа]?[€ю] [ к]епк[ау]") then
     return action[trade_type(str)].."аксессуар Ђ„Єрна€ кепкаї. "..get_price(str, trade_type(str))
   elseif str:find("[√г]итар[ау]") then
     return action[trade_type(str)].."аксессуар Ђ√итараї. "..get_price(str, trade_type(str))
@@ -2752,13 +2686,17 @@ function ad_handler(str)
     return action[trade_type(str)].."аксессуар Ђ–адиоактивный ранецї. "..get_price(str, trade_type(str))
   elseif str:find("[–р]юкзак") and str:find("[—с]кан") then
     return action[trade_type(str)].."аксессуар Ђ–юкзак с модулем сканировани€ї. "..get_price(str, trade_type(str))
+  elseif str:find("[–р]юк[зс]ак") and str:find("[ƒд]жинс") then
+    return action[trade_type(str)].."аксессуар Ђƒжинсовый рюкзакї. "..get_price(str, trade_type(str))
+  elseif (str:find("[∆ж]елез") or str:find("[ћм]ета")) and str:find("[ к]ры") then
+    return action[trade_type(str)].."аксессуар Ђ∆елезные крыль€ї. "..get_price(str, trade_type(str))
   elseif str:find("[—с]ет") and str:find("[ к]лоу") then
     return action[trade_type(str)].."аксессуар Ђ—ет клоунаї. "..get_price(str, trade_type(str))
   elseif str:find("[ѕп]ортат") and str:find("[ к][оа]лон") or str:find("[ к]олонк[уа]") then
     return action[trade_type(str)].."аксессуар Ђѕортативна€ колонка на плечеї. "..get_price(str, trade_type(str))
   elseif str:find("[–р]юкзак") and str:find("[Ќн]ано") then
     return action[trade_type(str)].."аксессуар Ђ–юкзак с нано-ускорителемї. "..get_price(str, trade_type(str))
-  elseif str:find("[–р]юкзак") and str:find("[ к]расно%p?%s?[Ѕб]елый") then
+  elseif str:find("[–р]юкзак") and str:find("[ к]расно%p?%s?[Ѕб]ел[ыи]й") then
     return action[trade_type(str)].."аксессуар Ђ расно-белый рюкзакї. "..get_price(str, trade_type(str))
   elseif str:find("[–р]юкзак") and str:find("[дƒ]жинс") then
     return action[trade_type(str)].."аксессуар Ђƒжинсовый рюкзакї. "..get_price(str, trade_type(str))
@@ -2772,7 +2710,7 @@ function ad_handler(str)
     return action[trade_type(str)].."аксессуар Ђ рыль€ дь€волаї. "..get_price(str, trade_type(str))
   elseif str:find("[“т]урбо%s?[к ]рыль€") then
     return action[trade_type(str)].."аксессуар Ђ“урбо-крыль€ с вентил€торомї. "..get_price(str, trade_type(str))
-  elseif str:find("[ќо]гнен") or str:find("[Ўш]ар") then
+  elseif str:find("[ќо]гнен") or str:find("[Ўш]ар") or (str:find("[Rr]og") and str:find("[Ss]har")) then
     return action[trade_type(str)].."аксессуар Ђ–ога с огненным шаромї. "..get_price(str, trade_type(str))
   elseif str:find("[ к]р[ыи]ль€ [‘ф]е") then
     return action[trade_type(str)].."аксессуар Ђ рыль€ ‘еиї. "..get_price(str, trade_type(str))
@@ -2780,7 +2718,7 @@ function ad_handler(str)
     return action[trade_type(str)].."аксессуар Ђ остюм јнгелаї. "..get_price(str, trade_type(str))
   elseif str:find("[ к]остюм [ƒд]ь€") then
     return action[trade_type(str)].."аксессуар Ђ остюм ƒь€волаї. "..get_price(str, trade_type(str))
-  elseif str:find("[«з]а€чьи [”у]ш[к]?и") or str:find("[”у]ши [«з]айца") or str:find("[”у]шки [«з]айки") then
+  elseif str:find("[«з]а[€й]чьи [”у]ш[к]?и") or str:find("[”у]ши [«з]айца") or str:find("[”у]шки [«з]айки") then
     return action[trade_type(str)].."аксессуар Ђ«а€чьи ушиї. "..get_price(str, trade_type(str))
   elseif str:find("[ к]орон[ао]вирус") then
     return action[trade_type(str)].."аксессуар Ђ оронавирусї. "..get_price(str, trade_type(str))
@@ -2820,14 +2758,16 @@ function ad_handler(str)
     return action[trade_type(str)].."аксессуар Ђ рестї. "..get_price(str, trade_type(str))
   elseif str:find("[ќоја]г[н]?[еи]м[еЄ]т") or str:find("огнет") then
     return action[trade_type(str)].."аксессуар Ђќгнеметї. "..get_price(str, trade_type(str))
-  elseif not str:find("резин") and str:find("[”у]див") or str:find("[¬в]згл") then
+  elseif (not str:find("резин") and not str:find("[бЅ]юро")) and str:find("[”у]див") or str:find("[¬в]згл") then
     return action[trade_type(str)].."аксессуар Ђ”дивлЄнный взгл€дї. "..get_price(str, trade_type(str))
   elseif str:find("[ к]осм") and str:find("[–р]ю[кд]зак") then
     return action[trade_type(str)].."аксессуар Ђ осмический рюкзакї. "..get_price(str, trade_type(str))
-  elseif str:find("[ја]рмейский") and str:find("[–р]ю[кд]зак") then
+  elseif (str:find("[ја]рмейский") or str:find("[¬в]о[Їе]н[н]?[иы]")) and str:find("[–р]ю[кд]зак") then
     return action[trade_type(str)].."аксессуар Ђјрмейский рюкзакї. "..get_price(str, trade_type(str))
   elseif str:find("[ѕп]ил[ја”у]") then
     return action[trade_type(str)].."аксессуар Ђѕилаї. "..get_price(str, trade_type(str))
+  elseif str:find("[с—]ер") and str:find("[∆ж]елез") then
+    return action[trade_type(str)].."аксессуар Ђ—ердце железного человекаї. "..get_price(str, trade_type(str))
   elseif str:find("[ к]олюч(.+)%s[Ѕб]ит") then
     return action[trade_type(str)].."аксессуар ЂЅита с гвозд€миї. "..get_price(str, trade_type(str))
   elseif str:find("[Ўш]урупо") then
@@ -2844,10 +2784,20 @@ function ad_handler(str)
     return action[trade_type(str)].."аксессуар Ђћаска инопланет€нинаї. "..get_price(str, trade_type(str))
   elseif str:find("[ћм]ас") and str:find("[ћм]арс") then
     return action[trade_type(str)].."аксессуар Ђћаска марсианинаї. "..get_price(str, trade_type(str))
+  elseif str:find("[Ёэ≈е]лектрош") then
+    return action[trade_type(str)].."аксессуар ЂЁлектрошокерї. "..get_price(str, trade_type(str))
   elseif str:find("[ћм]ас") and str:find("[—с]вар") then
     return action[trade_type(str)].."аксессуар Ђћаска сварщикаї. "..get_price(str, trade_type(str))
+  elseif (str:find("[ѕп]ерч") or str:find("[–р]ук")) and str:find("[“т]ан[оуа]с") then
+    return action[trade_type(str)].."аксессуар Ђѕерчатка “аносаї. "..get_price(str, trade_type(str))
+  elseif str:find("[ к]атан") and (str:find("[«з]олот") or str:find("[√г]олд")) then
+    return action[trade_type(str)].."аксессуар Ђ«олота€ катанаї. "..get_price(str, trade_type(str))
+  elseif str:find("[¬в]инт") and str:find("[—с]пи") or str:find("[—с]найп") then
+    return action[trade_type(str)].."аксессуар Ђ¬интовка на спинеї. "..get_price(str, trade_type(str))
   elseif str:find("[ к]атан") then
     return action[trade_type(str)].."аксессуар Ђ атанаї. "..get_price(str, trade_type(str))
+  elseif str:find("[Ќн][Ћл][ќо]") then
+    return action[trade_type(str)].."аксессуар ЂЌЋќї. "..get_price(str, trade_type(str))
   elseif str:find("[ћм]еч[^т]") and not str:find("роймат") and not str:find("аген") and not str:find("[gG][pP][sS]")  then
     return action[trade_type(str)].."аксессуар Ђћечї. "..get_price(str, trade_type(str))
   elseif str:find("[Ѕб]анан") or str:find("[Bb]anan") then
@@ -2864,12 +2814,14 @@ function ad_handler(str)
     return action[trade_type(str)].."аксессуар ЂЅронежилетї. "..get_price(str, trade_type(str))
   elseif not str:find("[ќо]руж") and not str:find("салон") and str:find("[∆ж][ие]л[кд]?[д]?ет") or str:find("[∆ж]иет") then
     return action[trade_type(str)].."аксессуар Ђ∆илеткаї. "..get_price(str, trade_type(str))
-  elseif not str:find("[Cc]lub") and str:find("[—с]иг") or str:find("[—с]иа[г]?ру") or str:find("[—с]егару") then
+  elseif not str:find("[Cc]lub") and str:find("[—с]иг") or str:find("[—с]и[гк]ар") or str:find("[—с]иа[г]?ру") or str:find("[—с]егару") then
     return action[trade_type(str)].."аксессуар Ђ—игаретаї. "..get_price(str, trade_type(str))
   elseif str:find("[—с]абл[ю€]") then
     return action[trade_type(str)].."аксессуар Ђ—абл€ї. "..get_price(str, trade_type(str))
   elseif str:find("[„ч]ас[иы]") and str:find("[–р]озов") or str:find("[Ѕб][оа][рд][др]?ов[ыи]е") then
     return action[trade_type(str)].."аксессуар ЂЅордовые часыї. "..get_price(str, trade_type(str))
+  elseif str:find("[„ч]ас[иы]") and str:find("[«з]олот") then
+    return action[trade_type(str)].."аксессуар Ђ«олотые часыї. "..get_price(str, trade_type(str))
   elseif str:find("[„ч]ас[иы]") and str:find("[—с][е]?р[еЇ]б") or str:find("[—с]ебердн€ыйе") or str:find("часы цвет серые") then
     return action[trade_type(str)].."аксессуар Ђ—еребр€ные часыї. "..get_price(str, trade_type(str))
   elseif str:find("[„ч]ас[иы]") then
@@ -2989,7 +2941,7 @@ function ad_handler(str)
       elseif str:find("очешь любви и ласки") then
         return "’очешь любви и ласки? “огда тебе в семью сказки Sofford!"
       end
-    elseif str:find("[»и]щ[ую] семью$") or str:find("[¬в]ступлю в .+ семью") or str:find("[¬в]ступлю в семью") or str:find("вступить в семью") or str:find("»щу семью.") or str:find("поисках дальн") then
+    elseif str:find("[»и]щ[ую] семью$") or str:find("[¬в]ступлю в .+ семью") or str:find("[¬в]ступлю в семью") or str:find("вступить в семью") or str:find("»щу семью.") or str:find("поисках дальн") or str:find("близких родст") or str:find("ищу родст[с]?вен[н]?иков") then
       return "»щу дальних родственников. ѕозвоните мне!"
     end
   elseif str:find("дв[а]?[о]?кат") then
@@ -3000,7 +2952,7 @@ function ad_handler(str)
   elseif str:find("ц[еи]нз[еЄ]р") or str:find("÷≈Ќ«[≈®]–") then
     return "ќт мэрии "..get_location(str):gsub(" в ", "").." работет лицензЄр. «воните."
   elseif str:find("[¬в]рач") then
-    if str:find("[LlЋл][Vv¬в]") or str:find("[LlЋл][Aaја][Ss—с]") then
+    if not str:find("LV %p") and str:find("[LlЋл][Vv¬в]") or str:find("[LlЋл][Aaја][Ss—с]") then
       return "ќт больницы ш. Las Venturas работает опытный врач. «воните!"
     elseif str:find("[LlЋл][Ss—с]") or str:find("[LlЋл][Ooќо][Ss—с]") then
       return "ќт больницы ш. Los Santos работает опытный врач. «воните!"
@@ -3015,7 +2967,7 @@ function ad_handler(str)
     elseif str:find("[—сSs][‘фFf]") or str:find("[—сSs][јаAa][ЌнNn]") then
       return "Ѕольница SF круглосуточно выдает медкарты. GPS 3-13"
     end  
-  elseif str:find("портзал") or str:find("—ѕќ–“«јЋ") or str:find("боев") or str:find("зале") or str:find("отпор") or str:find("искусс") or str:find("бокс") or str:find("абонементы") or str:find("тзал") or str:find("стиль бо€") or str:find("спорт") or str:find("ƒжеки „ан") or str:find("[ѕп]одкач") or str:find("качатьс€") or str:find("%s[«з]ал%p?%s") or str:find("[ к]ачалк") then
+  elseif str:find("портзал") or str:find("—ѕќ–“«јЋ") or str:find("боев") or str:find("зале") or str:find("отпор") or str:find("искусс") or str:find("бокс") or str:find("абонементы") or str:find("тзал") or str:find("стиль бо€") or (str:find("спорт") and not str:find("прокат")) or str:find("ƒжеки „ан") or str:find("[ѕп]одкач") or str:find("качатьс€") or str:find("%s[«з]ал%p?%s") or str:find("[ к]ачалк") then
     return location(str, "спортзал", "n", "n")
   
   elseif str:find("[ѕп]родам%s%d+%s[(цена)|(свата)]") then
@@ -3050,6 +3002,8 @@ function ad_handler(str)
     return clothes(str, trade_type(str))
   elseif str:find("[Ss]ell %d+ %W-$") then
     return clothes(str, trade_type(str))
+  elseif str:find("[Ss]ell %d+$") then
+    return clothes(str, trade_type(str))
   elseif str:find("[ к]у[п]?л[юб]%s%d+$") then
     return clothes(str, trade_type(str))
   elseif str:find("^%d+%s%d+%sкуплю$") then
@@ -3068,7 +3022,7 @@ function ad_handler(str)
     return clothes(str, trade_type(str))
   elseif str:find("[ к]упл[юб]%s%d+,%d+,%d+") then
     return clothes(str, trade_type(str))
-  elseif not str:find("[ћм][а]?газ") and not str:find("скидки") and not str:find("[Ѕб]из") and not str:find("[Ќн]авигац") and str:find("[ќо]д[еж]?[еж][д]?") or str:find("[—сCc][ к»и][–р]?[»и к][Ќн]") or str:find("%sски %d+") or str:find("skin") or str:find("костюм[ы]? [^(тел)]") or str:find("по[ш]?[и≥i][вф]") or str:find("ѕќЎ»¬") or str:find("бир[ко]") or str:find("шмот") or str:find("[¬в]уз[з]?и") or str:find("[р–]айдер") or str:find("[Ѕб]иг [—с]мо") or str:find("[Bb]ig [Ss]mo") or str:find("[Ўш]ахт[еЄ]ра") or str:find("[ƒд]жиз[з]?и") or str:find("[ћм]€сн") then
+  elseif not str:find("[ћм][а]?газ") and not str:find("скидки") and not str:find("[Ѕб]из") and not str:find("[Ќн]авигац") and str:find("[ќо]д[еж]?[еж][д]?") or str:find("[—сCc][ к»и][–р]?[»и к][Ќн]") or str:find("%sски %d+") or str:find("skin") or str:find("костю[ми][ы]?%s?[^(тел)]") or str:find("по[ш]?[и≥i][вф]") or str:find("ѕќЎ»¬") or str:find("бир[ко]") or str:find("шмот") or str:find("[¬в]уз[з]?и") or str:find("[р–]айдер") or str:find("[Ѕб]иг [—с]мо") or str:find("[Bb]ig [Ss]mo") or str:find("[Ўш]ахт[еЄ]ра") or str:find("[ƒд]жиз[з]?и") or str:find("[ћм]€сн") then
     debug("–аздел: ѕродажа скинов\n"..str, 2)
     if str:find("[ к]лоун") then
       return action[trade_type(str)].."одежду с биркой є264. "..get_price(str, trade_type(str))
@@ -3122,10 +3076,10 @@ function ad_handler(str)
     end
     return "ѕознакомлюсь с мужчиной. "..get_about_ys(str) --¬ступлю в —емью
 
-  elseif str:find("ищ[ую][^т]") or str:find("»[щш][ую][^т]") or str:find("[¬в]ступлю в [—с]емью") or str:find("[¬в]ступлю в фаму") or str:find("позвони мне") or str:find("еловек по имени") or str:find("[¬в] поисках") then
+  elseif str:find("ищ[ую][^т]") or str:find("»[щш][ую][^т]") or str:find("[¬в]ступлю в [—с]емью") or str:find("[¬в]ступлю в фаму") or str:find("позвони мне") or str:find("еловек по имени") or str:find("[¬в] поисках") or str:find("[Ќн]айду") then
     -- debug("FIND:"..str, 1)
     if str:find("_") then str = str:gsub("_", " ") end
-    if str:find("[ч]?елове[к]?[а]?") or str:find("игрока") or (str:find("позвони мне") and not str:find("альних")) or str:find("[»и][шщ][ую]%s%w+%s%w+$") then
+    if str:find("[ч]?елов[е]?[к]?[а]?") or str:find("игрока") or (str:find("позвони мне") and not str:find("альних")) or str:find("[»и][шщ][ую]%s%w+%s%w+$") then
       debug(str, 1)
       if str:find("имен[(ем)|(и)]%s(%w+)%s(%w+)$") then
         first, last = str:match("имен.+%s(.+)%s(.+)$")
@@ -3140,8 +3094,8 @@ function ad_handler(str)
         if str:find("%w+%s[ѕп]озв") then
           debug("P2, ID - 1", 1)
           first, last = str:match("[и≥]мен[и≥] (.+) (.+)%s[ѕп]оз")
-          if str:find("человека %w+") then
-            first, last = str:match("человека (%w+) (%w+)")
+          if str:find("челов[е]?ка %w+") then
+            first, last = str:match("челов[е]?ка (%w+) (%w+)")
           end
           
         elseif str:find("[и≥]мен[и≥] (%w+) (%w+)%sнапиши") then
@@ -3150,12 +3104,15 @@ function ad_handler(str)
         elseif str:find("[и≥]мен[и≥] (%w+) (%w+)%s[—с]в€ж") then
           first, last = str:match("[и≥]мен[и≥] (%w+) (%w+)%s[—с]в€ж")
           debug("P2, ID - 3", 1)
-        elseif str:find("[и≥]мен[и≥] (%w+) (%w+)%p?%s[ѕп]рос") then
-          first, last = str:match("[и≥]мен[и≥] (%w+) (%w+)%p?%s[ѕп]рос")
+        elseif str:find("[и≥]мен[н]?[и≥] (%w+) (%w+)%p?%s%W+") then
+          first, last = str:match("[и≥]мен[н]?[и≥] (%w+) (%w+)%p?%s%W+")
           debug("P2, ID - 4", 1)
         elseif str:find("именем%s%w+%s%w+.%sѕозвони") then
           debug("P2, ID - 5", 1)
           first, last = str:match("именем (%w+)%s(%w+).%sѕозвони")
+        elseif str:find("щу человека %w+ %w+. ѕоз") then
+          debug("P2, ID - 6-1", 1)
+          first, last = str:match("щу человека (%w+) (%w+). ѕоз")
         elseif str:find("%w+%p%sѕозв") then
           debug("P2, ID - 6", 1)
           first, last = str:match("имени (%w+) (%w+)%p%s?ѕоз")
@@ -3166,7 +3123,7 @@ function ad_handler(str)
           print(string.format("Find player | ID: 7 - %s %s", first, last))
         elseif str:find("[(игрока)|(человека)|(ником)] %w+ %w+$") then
           debug("P2, ID - 8", 1)
-          first, last = str:match("[(игрока)|(человека)] (.+) (.+)$")
+          first, last = str:match("[(игрока)|(человека)] (%w+) (%w+)$")
         elseif str:find("%w+$") then
           debug("P2, ID - 9", 1)
           first, last = str:match("имен[ие][м]? (.+) (.+)$")
@@ -3217,7 +3174,7 @@ function ad_handler(str)
       end
       first, last = capitalize_nick(first, last)
       return "»щу человека по имени "..first:gsub("\"", "").." "..last:gsub("\"", "")..". ѕозвони мне!"
-    elseif str:find("родс[т]?[т]?в[уи]?[ен][ен]") or str:find("[—с]емью") or str:find("фаму") then
+    elseif str:find("родс[т]?[с]?[т]?в[уи]?[ен][ен]") or str:find("близких родст") or str:find("[—с]емью") or str:find("фаму") then
       return "»щу дальних родственников. ѕозвоните мне!"
     else
       if str:find("щу (.+) (.+)") then
@@ -3248,6 +3205,8 @@ function ad_handler(str)
       return "ѕродам бизнес Ђ—портзалї"..get_location(str)..". "..get_price(str, trade_type(str))
     elseif str:find("[—с]антех") then
       return "ѕродам Ђ—алон —антехникиї"..get_location(str)..". "..get_price(str, trade_type(str))
+    elseif str:find("[Ёэ≈е]кск") or str:find("[т“]рансп") then
+      return "ѕродам бизнес Ђѕрокат эксклюзивных автої"..get_location(str)..". "..get_price(str, trade_type(str))
     elseif str:find("[ја]рхит") or str:find("[ја]рх [Ѕб]юро") then
       return "ѕродам бизнес Ђјрхитектурное бюрої"..get_location(str)..". "..get_price(str, trade_type(str))
     elseif str:find("[ја]гробирж") then
@@ -3386,15 +3345,32 @@ function ad_handler(str)
       if str:find("[ѕп]ончик") then
         return "ѕродам бизнес Ђ«акусочна€-ѕончикї"..get_location(str)..". "..get_price(str, trade_type(str))
       elseif str:find("аукционе кондитерска€") then
-        return "Ќа аукционе кондитерска€ Ђѕончикї за больницей ш. LS. ÷ена: 45.000.000$"
+        return "Ќа аукционе кондитерска€ Ђѕончикї за больницей ш. LS. "..get_price(str, trade_type(str))
       elseif str:find("[(шот)|(Shot)|(shot)]") and str:find("номер 1") or str:find("є1") then
           return "ѕродам бизнес ЂBurger Shot є1ї"..get_location(str)..". "..get_price(str, trade_type(str))
       elseif str:find("[—сSs][Ff‘ф][Ff‘ф][Mmћм]") then
         return "ѕродам закусочную у радиоцентра San Fierro. "..get_price(str, trade_type(str))
       elseif str:find("÷ентр") then
         return "ѕродам Ђ÷ентральную закусочнуюї в ш. San Fierro. "..get_price(str, trade_type(str))
-      elseif str:find("«акусочна€ Burger Shot") then
-        return "ѕродам бизнес Ђ«акусочна€ Burger Shot є1ї "..get_location(str)..". "..get_price(str, trade_type(str))
+
+      elseif str:find("[«з]акусочн[ау][€ю] Burger Shot") and str:find("є1") then
+        if str:find("ау[кц]") then
+          return "Ќа аукционе бизнес ЂBurger Shot є1ї "..get_location(str)..". "..get_price(str, trade_type(str))
+        end
+        return "ѕродам закусочную ЂBurger Shot є1ї "..get_location(str)..". "..get_price(str, trade_type(str))
+
+      elseif str:find("[«з]акусочн[ау][€ю] Burger Shot") and str:find("є2") then
+        if str:find("ау[кц]") then
+          return "Ќа аукционе бизнес ЂBurger Shot є2ї "..get_location(str)..". "..get_price(str, trade_type(str))
+        end
+        return "ѕродам закусочную ЂBurger Shot є2ї "..get_location(str)..". "..get_price(str, trade_type(str))
+
+      elseif (str:find("[«з]акусочн[ау][€ю] Burger Shot") and str:find("є3")) or str:find("[Bb]urger [Ss]hot є3") then
+        if str:find("ау[кц]") then
+          return "Ќа аукционе бизнес ЂBurger Shot є3ї "..get_location(str)..". "..get_price(str, trade_type(str))
+        end
+        return "ѕродам закусочную ЂBurger Shot є3ї "..get_location(str)..". "..get_price(str, trade_type(str))
+
       elseif str:find("[Ѕб]у[рг][гре][ег][о]?шот") or str:find("бизнес") and str:find("Burger%s?Shot") or str:find("[Ѕб]ур[гш]ер [Ўш]от")  then
         return "ѕродам бизнес ЂBurger Shotї"..get_location(str)..". "..get_price(str, trade_type(str))
       elseif str:find("[я€]пон[с]?к") then
@@ -3403,7 +3379,7 @@ function ad_handler(str)
         end
         return "ѕродам Ђяпонскую закусочнуюї в ш. Las Venturas. "..get_price(str, trade_type(str))
       end
-      return "ѕродам бизнес Ђ«акусочна€ї"..get_location(str)..". "..get_price(str, trade_type(str))
+      return "ѕродам закусочную"..get_location(str)..". "..get_price(str, trade_type(str))
     elseif str:find("[Ѕб]укме") then
       return "ѕродам ЂЅукмекерскую конторуї"..get_location(str)..". "..get_price(str, trade_type(str))
     elseif str:find("[ к]азино") and str:find("[ЋлLl][ќоOo][—сsS]") then
@@ -3463,7 +3439,7 @@ function ad_handler(str)
       return "ѕродам бизнес Ђѕиццери€ї"..get_location(str)..". "..get_price(str, trade_type(str))
     elseif str:find("[ѕп]рода[мю]") and str:find("[Ѕб]анк") then
       return "ѕродам банк"..get_location(str)..". "..get_price(str, trade_type(str))
-    elseif str:find("[ћм][а]?гази[нг] [ќо]дежды") or str:find("магаз одежды") or str:find("биз одежда") or str:find("%s[Dƒ][S—C]") then
+    elseif str:find("[ћм][а]?гази[нг] [ќо]дежды") or str:find("магаз одежды") or str:find("биз одежда") or str:find("%s[Dƒ][S—C]") or str:find("[Uu]rban") then
       -- debug("ѕродажа: магазин одежды\n"..str, 3)
       if str:find("[ја]укц") then
         if str:find("[Ss]ub [Uu]rban") or str:find("[—с][уа]б [”у]рбан") then
@@ -3488,6 +3464,8 @@ function ad_handler(str)
     elseif str:find("[–р]есторан") then
       if str:find("[ѕп]рез[ие]ден") then
         return "ѕродам Ђѕрезидентский ресторанї в ш. Los Santos. "..get_price(str, trade_type(str))
+      elseif str:find("[ја]ле[ей]") then
+        return "ѕродам Ђ–есторан на алее звЄздї в ш. Los Santos. "..get_price(str, trade_type(str))
       end
       return "ѕродам бизнес Ђ–есторанї"..get_location(str)..". "..get_price(str, trade_type(str))
     elseif str:find("[—с]толов[уао][ю€]") then
@@ -3496,8 +3474,14 @@ function ad_handler(str)
       return "ѕродам бизнес Ђѕрибрежный клубї"..get_location(str)..". "..get_price(str, trade_type(str))
     elseif str:find("zip тцлв") then
       return "ѕродам магазин одежды ЂZIPї в “÷Ћ¬. "..get_price(str, trade_type(str))
-    elseif str:find("[Ќн]омерн(.+) знаки") and str:find("[(SF)|(—‘)|[сф]]") then
-      return "ѕродам бизнес ЂЌомерные знаки в SFї. "..get_price(str, trade_type(str))
+    elseif str:find("[Ќн]омерн(.+) знаки") then
+      if str:find("[ЋлlL][—сSs]") then
+        return "ѕродам бизнес ЂЌомерные знаки в LSї. "..get_price(str, trade_type(str))
+      elseif str:find("[(SF)|(—‘)|[сф]]") then
+        return "ѕродам бизнес ЂЌомерные знаки в SFї. "..get_price(str, trade_type(str))
+      elseif str:find("[LlЋл][Vv¬в]") then
+        return "ѕродам бизнес ЂЌомерные знаки в LVї. "..get_price(str, trade_type(str))
+      end
     elseif str:find("[ѕп]родам магазин в районе") then
       return string.format("ѕродам магазин Ђ24/7ї %s. %s", get_location(str), get_price(str, trade_type(str)))
     --elseif str:find("")
@@ -3506,7 +3490,7 @@ function ad_handler(str)
       return "ERROR"
     end
   elseif str:find("[–р][ја]бо[ат]") and str:find("[ћм]ехан") then
-    return "ѕо фередации работает опытный автомеханик. «воните."
+    return "ѕо федерации работает опытный автомеханик. «воните."
   elseif str:find("[–р][ја]бо[ат]") and str:find("[“т]акси") or str:find("TAXI") then
     if str:find("[—сSs][‘фFf]") or str:find("[—с]ан [‘ф]иерро") or str:find("[Ss]an [Ff]ierro") then
       taxi_loc = "штату SF"
@@ -3597,10 +3581,10 @@ function ad_handler(str)
 end
 
 function trade_type(str)
-  if str:find("(.-)[”уyY][ц÷]?[пл»и][а]?[лп][дб]?ю") or str:find("[ к]упл.") or str:find("[kK][uy]pl[y]?u") or str:find("[ к]упить") or str:find("[ѕп]риобре") or str:find("^[ к]пю") or str:find("(.-)[”у][ѕп][лЋƒд][юёЅб]") or str:find("kyply") or str:find("[ к]у[а]?лю") or str:find("[Bb]uy") or str:find("[ к]алю") or str:find("[ к]упю") then
+  if str:find("(.-)[”уyY][ц÷]?[пл»и][а]?[лп][дб]?ю") or str:find("[ к]упл.") or str:find("[ к]упаю") or str:find("[kK][uy]pl[y]?[uy]") or str:find("[ к]упить") or str:find("[ѕп]риобре") or str:find("^[ к]пю") or str:find("(.-)[”у][ѕп][лЋƒд][юёЅб]") or str:find("kyply") or str:find("[ к]у[а]?лю") or str:find("[Bb]uy") or str:find("[ к]алю") or str:find("[ к]упю") then
     print(str)
     return "buy"
-  elseif str:find("(.-)[оoл][дd][aав][мm]") or str:find("[ѕп]ро[ак]дм") or str:find("[ѕп]–[–]?[ќЋ]ƒ[∆]?[ја][мћ]") or str:find("^[ѕп]ро[дƒ]") or str:find("[Pp]rodam") or str:find("(.-)родаю") or str:find("(.*)ро(.*)[ап]м") or str:find("одат") or str:find("рдам") or str:find("родм") or str:find ("[ѕп]родма") or str:find ("[ѕп][р–][ќо]да") or str:find("(.-)ell") or str:find("^[—с][≈е][Ћл][Ћл]") or str:find("[Gg]hjlfv") then
+  elseif str:find("(.-)[оoл][дd][aав][мmy]") or str:find("[ѕп]ро[ак]дм") or str:find("[ѕп]–[–]?[ќЋ]ƒ[∆]?[ја][мћ]") or str:find("^[ѕп]ро[дƒ]") or str:find("[Pp]rodam") or str:find("(.-)родаю") or str:find("(.*)ро(.*)[ап]м") or str:find("одат") or str:find("рдам") or str:find("родм") or str:find ("[ѕп]родма") or str:find ("[ѕп][р–][ќо]да") or str:find("(.-)ell") or str:find("^[—с][≈е][Ћл][Ћл]") or str:find("[Gg]hjlfv") then
     return "sell"
   elseif str:find("[ја]укц[ие]он") or str:find("[ја]ук") or str:find("[Ќн]а аук[е]?") or str:find("[ја]ууционе") then
     return "auction"
@@ -3636,7 +3620,7 @@ function get_taxi_name(str)
     taxi_n = ""
   end
   sampAddChatMessage(string.format("Ќазвание такси: %s", taxi_n or "error"), 0xAFBB77)
-  return string.format(" Ђ%sї", taxi_n or "error")
+  return string.format(" Ђ%sї", taxi_n or "")
 end
 
 --=================[SIM-CARD]=================--
@@ -3669,20 +3653,25 @@ function get_simcard_fmt(str)
     print("SIM FORMAT ID 6")
     format = str:match("[‘ф][о]?рма[т]?[еа]?[а]? (.-)$")
   elseif str:find("[‘ф][о]?рма[т]?[еа]?[а]?%p (.-)[.,]") then
+    print("SIM FORMAT ID 7")
     format = str:match("[‘ф][о]?рма[т]?[еа]?[а]?%p (.-)[.,]")
     
   elseif str:find("[‘ф][о]?рма[т]?ом (.-)$") then
+    print("SIM FORMAT ID 8")
     format = str:match("[‘ф][о]?рма[т]?ом (.-)$")
   elseif str:find("с[у]?[им][им]к[уа]%s%W+%s%W+%s%W+%sцена") then
+    print("SIM FORMAT ID 9")
     format = str:match("с[у]?[им][им]к[уа]%s(%W+%s%W+%s%W+)%sцена"):gsub(" ", "")
   elseif str:find("с[у]?[им][им]к[уа] .-[,.]?%s") then
+    print("SIM FORMAT ID 10")
     format = str:match("с[у]?[им][им]к[уа] (.-)[,.]?%s")
-
+    
   elseif str:find("с[у]?[им][им]к[уа] .-[,.]") then
-    debug("SIM3", 2)
-
+    print("SIM FORMAT ID 11")
+    
     format = str:match("с[у]?[им][им]к[уа] (.-)[,.]")
   elseif str:find("с[у]?[им][им]к[уа] %d+%s") then
+    print("SIM FORMAT ID 12")
     format = str:match("с[у]?[им][им]к[уа] (%d+)%s")
   elseif str:find("с[у]?[им][им]%s?к[уа] %d+$") then
     debug("SIM2", 2)
@@ -3695,15 +3684,23 @@ function get_simcard_fmt(str)
     format = str:match("с[у]?[им][им]к[уа] %s?(.+)$")
     debug("3333", 2)
   elseif str:find("[Cc—с][aа][rр][dт] .+[,.]") then -- уплю Sim-card xxx-xxx
+    print("SIM FORMAT ID 13")
     format = str:match("[Ccс—][aа][rр][dт] (.+)[,.]")
   elseif str:find("[Cc—с][aа][rр][dт] %d+$") then
+    print("SIM FORMAT ID 15")
     format = str:match("[Cc—с][aа][rр][dт] (%d+)$")
   elseif str:find("[Cc—с][aа][rр][dт] (.-)$") then
+    print("SIM FORMAT ID 14")
     format = str:match("[Cc—с][aа][rр][dт] (.-)$")
     -- debug(format, 1)
-
+    
   elseif str:find("[Cc—с][aа][rр][dт]%s.+%s") then
+    print("SIM FORMAT ID 16")
     format = str:match("[Cc—с][aа][rр][dт]%s(.+)%s"):upper()
+  elseif str:find("типа%s[^(Ќомер)].-$") then
+    print("SIM FORMAT ID 17")
+    format = str:match("типа%s(.+)"):upper():gsub("%p", "")
+    debug(format, 1)
   elseif str:find("карту%s[^(Ќомер)].-%s") then
     format = str:match("карту%s(.-)%s"):upper():gsub("%p", "")
     debug(format, 1)
@@ -3711,38 +3708,69 @@ function get_simcard_fmt(str)
     format = str:match("карту%s(.-)$"):upper()
     
   elseif str:find("формата .+%sц") then
+    print("SIM FORMAT ID 18")
     format = str:match("формата (.+)%sц")
   elseif str:find("формата .+$") then
+    print("SIM FORMAT ID 19")
     format = str:match("формата (.+)$")
   elseif str:find("номер \".+\"") then
+    print("SIM FORMAT ID 20")
     format = str:match("номер \"(.+)\"")
   elseif str:find("[Ќн]омер%s.+%sц") then
+    print("SIM FORMAT ID 21")
     format = str:match("[Ќн]омер%s(.+)%sц")
   elseif str:find("номер .+%p") then
+    print("SIM FORMAT ID 22")
     format = str:match("номер (.-)%p")
   elseif str:find("номер .+%s") then
+    print("SIM FORMAT ID 23")
     format = str:match("номер (.+)%s")
   elseif str:find("номер .+$") then
+    print("SIM FORMAT ID 24")
     format = str:match("номер (.+)$")
-  elseif str:find("[Ss][Ii][Mm][k]?%s.+%s") then
-    format = str:match("[Ss][Ii][Mm][k]?%s(.+)%s")
-  elseif str:find("[Ss][Ii][Mm][k]?%s.+$") then
+  elseif str:find("[Ss][Ii][Mm][k]?%s%w%w%w %w%w%w$") then
+    print("SIM FORMAT ID 25")
     format = str:match("[Ss][Ii][Mm][k]?%s(.+)$")
+
+  elseif str:find("[Ss][Ii][Mm][k]?%s.+%p.+%p.+$") then
+    print("SIM FORMAT ID 26-1")
+    format = str:match("[Ss][Ii][Mm][k]?%s(.+%p.+%p.+)$")
+
+  elseif str:find("[Ss][Ii][Mm][k]?%s.+%p") then
+    print("SIM FORMAT ID 26-2")
+    format = str:match("[Ss][Ii][Mm][k]?%s(.+)%p")
+
+
+  elseif str:find("[Ss][Ii][Mm][k]?%s.+%s") then
+    print("SIM FORMAT ID 27")
+    format = str:match("[Ss][Ii][Mm][k]?%s(.+)%s")
+
+  elseif str:find("[Ss][Ii][Mm][k]?%s.+$") then
+    print("SIM FORMAT ID 28")
+    format = str:match("[Ss][Ii][Mm][k]?%s(.+)$")
+
   elseif str:find("%s%d+%sсимк[уа]$") then
+    print("SIM FORMAT ID 29")
     format = str:match("%s(%d+)%sсимк[уа]$")
+
   elseif str:find("[ѕп]родам%s%d+%s") then
     format = str:match("[ѕп]родам%s(%d+)%s")
-  -- elseif str:find("сим%s.-%p?%s") then
-  --   format = str:match("сим%s(.-)%p?%s")
-  elseif str:find("[—с]им .-,") then -- уплю Sim-card xxx-xxx
-    format = str:match("[—с]им (.-),") print("сим 1")
-  elseif str:find("[—с]им %d+$") then
-    format = str:match("[—с]им (%d+)$")  print("сим 2")
-  elseif str:find("[—с]им (.-)%s") then
-    format = str:match("[—с]им (.-)%s")  print("сим 3")
-  elseif str:find("[—с]им (.-)$") then
-    format = str:match("[—с]им (.-)$")  print("сим 4")
-  elseif str:find("[—с]им (.-) (.-)$") then
+    -- elseif str:find("сим%s.-%p?%s") then
+      --   format = str:match("сим%s(.-)%p?%s")
+    elseif str:find("[—с]им .-,") then -- уплю Sim-card xxx-xxx
+      print("SIM FORMAT ID 31")
+      format = str:match("[—с]им (.-),") print("сим 1")
+    elseif str:find("[—с]им %d+$") then
+      print("SIM FORMAT ID 32")
+      format = str:match("[—с]им (%d+)$")  print("сим 2")
+    elseif str:find("[—с]им (.-)%s") then
+      print("SIM FORMAT ID 33")
+      format = str:match("[—с]им (.-)%s")  print("сим 3")
+    elseif str:find("[—с]им (.-)$") then
+      print("SIM FORMAT ID 34")
+      format = str:match("[—с]им (.-)$")  print("сим 4")
+    elseif str:find("[—с]им (.-) (.-)$") then
+      print("SIM FORMAT ID 35")
     format = str:match("[—с]им (.-) (.-)$")  print("сим 5")
   elseif str:find("[—с]им%s.-%s") then
   else
@@ -4057,11 +4085,11 @@ function clothes(str, act)
   debug("ќдежда: "..str, 1)
   --3 скина
   --продам скины 272 208 99
-  if str:find('%d+%p%s%d+%p%s%d+%p') then
-    clothes_ids = get_clothes_id(str, "(%d+)%p%s(%d+)%p%s(%d+)%p", 3, 31)
+  if str:find('%d+%p%s%d+%p%s%d+[^%.]') then
+    clothes_ids = get_clothes_id(str, "(%d+)%p%s(%d+)%p%s(%d+)", 3, 31)
     h_string = action[act].."одежду с бирками "..clothes_ids..". "..get_price(str, act)
   elseif str:find('%d+%p%s%d+%p%s%d+%s') then
-    clothes_ids = get_clothes_id(str, "(%d+)%p%s(%d+)%p%s(%d+)%s", 3, 31)
+    clothes_ids = get_clothes_id(str, "(%d+)%p%s(%d+)%p%s(%d+)%s", 3, 311)
     h_string = action[act].."одежду с бирками "..clothes_ids..". "..get_price(str, act)
   elseif str:find('%d+%p%s%d+%s%d+$') then
     clothes_ids = get_clothes_id(str, "(%d+)%p%s(%d+)%s(%d+)$", 3, 320)
@@ -4142,11 +4170,11 @@ function clothes(str, act)
     clothes_ids = get_clothes_id(str, "\"(%d+)%s?%p%s?(%d+)%s?%p%s?(%d+)\"", 3, 318)
     h_string = action[act].."одежду с бирками "..clothes_ids..". "..get_price(str, act) 
     -- ѕродам скины 116 125 126 тел 1991
-  elseif str:find('[(пошив)|(бирками)|(биркой)|(скины)|(одежду)]%s%d+%s%d+%s%d+') then
-    clothes_ids = get_clothes_id(str, "[(пошив)|(бирками)|(биркой)|(скины)|(одежду)]%s(%d+)%s(%d+)%s(%d+)", 3, 318)
+  elseif str:find('[(пошив)|(бирками)|(биркой)|(скины)|(одежду)]%s%d+%s%d+%s%d+$') then
+    clothes_ids = get_clothes_id(str, "[(пошив)|(бирками)|(биркой)|(скины)|(одежду)]%s(%d+)%s(%d+)%s(%d+)", 3, 3191)
     h_string = action[act].."одежду с бирками "..clothes_ids..". "..get_price(str, act) 
   elseif str:find('[ к]упл[юб]%s%d+%s%d+%s%d+$') then
-    clothes_ids = get_clothes_id(str, "[ к]упл[юб]%s(%d+)%s(%d+)%s(%d+)$", 3, 318)
+    clothes_ids = get_clothes_id(str, "[ к]упл[юб]%s(%d+)%s(%d+)%s(%d+)$", 3, 320)
     h_string = action[act].."одежду с бирками "..clothes_ids..". "..get_price(str, act) 
   elseif str:find('скины %d+, %d+, %d+$') then
     -- продам скины 104, 110, 286
@@ -4169,6 +4197,27 @@ function clothes(str, act)
   elseif str:find('є%d+%p %d+ и %d+') then
     clothes_ids = get_clothes_id(str, "є(%d+)%p (%d+) и (%d+)", 3, 326)
     h_string = action[act].."одежду с бирками "..clothes_ids..". "..get_price(str, act) 
+  elseif str:find("пошивы %d+ / %d+ /%s?%d+") then
+    clothes_ids = get_clothes_id(str, "%W+ (%d+) / (%d+) /%s?(%d+)$", 3, 327)
+    h_string = action[act].."одежду с бирками "..clothes_ids..". "..get_price(str, act)
+  elseif str:find("%d+ / %d+ /%s?%d+ пошивы") then
+    clothes_ids = get_clothes_id(str, "(%d+) / (%d+) /%s?(%d+) пошивы$", 3, 327)
+    h_string = action[act].."одежду с бирками "..clothes_ids..". "..get_price(str, act)
+  elseif str:find("skin:%d+,%d+,%d+$") then
+    clothes_ids = get_clothes_id(str, "skin:(%d+),(%d+),(%d+)$", 3, 327)
+    h_string = action[act].."одежду с бирками "..clothes_ids..". "..get_price(str, act)
+  elseif str:find("%W+%s%d+%s%d+%s%d+%s%W+") then
+    --продам скины 111 112 125 ÷ена 9кк
+    clothes_ids = get_clothes_id(str, "%W+%s(%d+)%s(%d+)%s(%d+)%s%W+", 3, 327)
+    h_string = action[act].."одежду с бирками "..clothes_ids..". "..get_price(str, act)
+  elseif str:find("%s%d+%p%sє%d+%p%sє%d+") then
+    --продам скины 111 112 125 ÷ена 9кк
+    clothes_ids = get_clothes_id(str, "%s(%d+)%p%sє(%d+)%p%sє(%d+)", 3, 327)
+    h_string = action[act].."одежду с бирками "..clothes_ids..". "..get_price(str, act)
+  elseif str:find("%W+%s%W+%sє%d+%s%p%sє%d+%sи%sє%d+$") then
+    --костюм пошива є125 , є83 и є164
+    clothes_ids = get_clothes_id(str, "%W+%s%W+%sє(%d+)%s%p%sє(%d+)%sи%sє(%d+)$", 3, 327)
+    h_string = action[act].."одежду с бирками "..clothes_ids..". "..get_price(str, act)
     
     --[ к]упл[юб]%s%d+%s%d+%s%d+$
   --2 скина
@@ -4246,6 +4295,9 @@ function clothes(str, act)
   elseif str:find("є%d+%sи%sє%d+$?") then
     clothes_ids = get_clothes_id(str, "є(%d+)%sи%sє(%d+)$?", 2, 217)
     h_string = action[act].."одежду с бирками "..clothes_ids..". "..get_price(str, act)
+  elseif str:find("є%s%d+%sи%sє%s%d+$?") then
+    clothes_ids = get_clothes_id(str, "є%s(%d+)%sи%sє%s(%d+)$?", 2, 217)
+    h_string = action[act].."одежду с бирками "..clothes_ids..". "..get_price(str, act)
   elseif str:find("є%d+%pє%d+$?") then
     clothes_ids = get_clothes_id(str, "є(%d+)%pє(%d+)$?", 2, 217)
     h_string = action[act].."одежду с бирками "..clothes_ids..". "..get_price(str, act)
@@ -4294,6 +4346,10 @@ function clothes(str, act)
   elseif str:find('^%w+ skin %d+ %d+$') then
     clothes_ids = get_clothes_id(str, '^%w+ skin (%d+) (%d+)$', 2, 229)
     h_string = action[act].."одежду с бирками "..clothes_ids..". "..get_price(str, act)
+  elseif str:find('^%W+%s%d+%s%W+%sи%s%d+$') then
+    --продаю 292 скин и 46
+    clothes_ids = get_clothes_id(str, '^%W+%s(%d+)%s%W+%sи%s(%d+)$', 2, 230)
+    h_string = action[act].."одежду с бирками "..clothes_ids..". "..get_price(str, act)
     --debug(h_string, 2)
   --elseif str:find("%d+ за") or str:find("%d+ цена") then
     --h_string = action[act].."одежду с биркой "..get_price(str)
@@ -4328,7 +4384,7 @@ function clothes(str, act)
   elseif str:find("%d+%s%sскин") then skin_id = str:match("(%d+)%s%sскин")
       --debug("Clothe: 7.1", 4)
     h_string = action[act].."одежду с биркой є"..skin_id..". "..get_price(str, act) --new
-  elseif str:find("%s%d+%sскин") then skin_id = str:match("%s(%d+)%s")
+  elseif str:find("%s%d+%s[сs][кk][иi][нn]") then skin_id = str:match("%s(%d+)%s")
    --debug("Clothe: 7", 4)
     h_string = action[act].."одежду с биркой є"..skin_id..". "..get_price(str, act) --new
   elseif str:find("%s%d+%scкин") then skin_id = str:match("%s(%d+)%s")
@@ -4369,6 +4425,8 @@ function clothes(str, act)
     h_string = action[act].."одежду с биркой є"..skin_id..". "..get_price(str, act) --new
   elseif str:find("sell%s%d+%sskin") then skin_id = str:match("sell%s(%d+)%sskin")
    debug("Clothe: 18", 4)
+  elseif str:find("[Ss]ell%s%d+$") then skin_id = str:match("[Ss]ell%s(%d+)$")
+   debug("Clothe: 18-2", 4)
     h_string = action[act].."одежду с биркой є"..skin_id..". "..get_price(str, act)
   elseif str:find("skin%s%d+%s") then skin_id = str:match("skin%s(%d+)%s")
    debug("Clothe: 18", 4)
@@ -4398,6 +4456,8 @@ function clothes(str, act)
   elseif str:find("продам %d+ за") then skin_id = str:match("продам (%d+) за")
     h_string = action[act].."одежду с биркой є"..skin_id..". "..get_price(str, act)
   elseif str:find(": %d+. [÷ц]ен") then skin_id = str:match(": (%d+). [÷ц]ен")
+    h_string = action[act].."одежду с биркой є"..skin_id..". "..get_price(str, act)
+  elseif str:find("%W+%s%W+:%d+$") then skin_id = str:match("%W+%s%W+:(%d+)$")
     h_string = action[act].."одежду с биркой є"..skin_id..". "..get_price(str, act)
   else
     print("{cc0000}ERROR 8 (clothes):{b2b2b2}", str)
@@ -4444,7 +4504,7 @@ end
 function vechicles(str, trade, v_type, model)
   print("{18c860}VEHICLES:{B2B2B2}", str, trade)
   if str:find("рынок") or str:find("р[ыи]нке") or str:find("укци") or str:find("[¬в]ы[с]?%p?тавл[е€]н") then
-    return "Ќа авторынке выставлен "..v_type.." марки Ђ"..model.."ї"..car_tuning(str).." "..get_price(str, trade_type(str))
+    return "Ќа авторынке выставлен "..v_type.." марки Ђ"..model.."ї"..car_tuning(str).." "..get_price(str, "carmarket")
   elseif trade == "my_change" or trade == "ur_change" or trade == "change" or trade == "d_change" then
     print(tableToString({v_type, model, car_tuning(str), car_exchange(str), get_price(str, trade_type(str))}))
     left_part, right_part = car_exchange(str)
@@ -4461,9 +4521,9 @@ function vechicles(str, trade, v_type, model)
     return car_exch_str
   end
   print(action[trade], v_type, model, car_tuning(str), get_price(str, trade))
-  a = get_price(str, trade)
+  a = get_price(str, trade) or 0
   print("{AC41BF}"..a)
-  return action[trade]..v_type.." марки Ђ"..model.."ї"..car_tuning(str)..". "..get_price(str, trade)
+  return action[trade]..v_type.." марки Ђ"..model.."ї"..car_tuning(str)..". "..(get_price(str, trade) or 0)
 end
 
 function car_exchange(str)
@@ -4474,7 +4534,7 @@ function car_exchange(str)
     print(12341)
     return car_names(split_string["left"])..car_tuning(split_string["left"]), "ваш транспорт"
   end
-  print("{BAF25E}2: "..car_names(split_string["left"]).."{F2E25E}"..split_string["right"])
+  print(string.format("{BAF25E}2: %s{F2E25E} %s", car_names(split_string["left"]) or "ERROR", split_string["right"] or "ERROR"))
   if str:find("на%s.+[(%s)|(%p)]") and not str:find("мотоцикл") then
     car_name = str:match("на%s(.+)[(%s)|(%p)]")
   -- elseif str:find("на%s.+[(%s)|(%p)]") and not str:find("мотоцикл") then
@@ -4622,24 +4682,26 @@ function get_price(str, act)
   -- debug(str, 2)
   -- debug(act, 5)
   str = str:gsub("+торг", "")
-  if str:find("[ƒд][о]?[вш]?го[рво]") or str:find("[ƒд]о[во][гв][о]?рна€") or str:find("[÷ц]ена%p%p%p") or str:find("[∆ж]огворна€") or str:find("ƒ[ќо]гов") or str:find("дловр") or str:find("[^%p][ƒд]ог") or str:find("цена люба€") or str:find("цена дг") or str:find("[ёю]огоо") or str:find("[—с]в[о]?б[ю]?о") or str:find("[—с]овбо") or str:find("огов") or str:find("[÷ц]ена дг$") or str:find("[∆ж]огвооран€") or str:find("[∆ж]огвррна€") or str:find("джет[:]?%s[(неогр)|(Ѕольшо)]") then
+  if str:find("[ƒд][о]?[вш]?го[рво]") or str:find("[ƒд]о[во][гв][о]?рна€") or str:find("[÷ц]ена%p%p%p") or str:find("[∆ж]огворна€") or str:find("ƒ[ќо]гов") or str:find("дловр") or str:find("[^%p][ƒд]ог") or str:find("цена люба€") or str:find("цена дг") or str:find("[ёю]огоо") or str:find("[—с]в[о]?б[ю]?о") or str:find("[—с]овбо") or str:find("огов") or str:find("[÷ц]ена дг$") or str:find("[∆ж]огвооран€") or str:find("[∆ж]огвррна€") or str:find("[ц÷]ена [оќ]бсуждаема€") or str:find("джет[:]?%s[(неогр)|(Ѕольшо)]") then
     -- debug(str.." "..act, 3)
     return "÷ена договорна€"
     --куплю одежду пошива 303,304,305
   elseif str:find("[—с]тавка") and str:find("гос") then
     
     return "—тавка по гос. цене"
-  elseif str:find("[цй]ен[ае]") or str:find ("за %d") or str:find("%d+кк") or str:find("%d   $") or str:find("[ к][ к][^—с]") or str:find("÷ена") or str:find("ю[дт]жет") or str:find("%d[кk]$") or str:find("[^ea][kr][kr]") and not str:find("договорна€") or act == "surcharge" then
+  elseif str:find("[цй÷][е≈][нЌ][јае]") or str:find ("за %d") or str:find("%d+кк") or str:find("%d   $") or str:find("[ к][ к][^—с]") or str:find("÷ена") or str:find("ю[дт]жет") or str:find("%d[кk]$") or str:find("[cC]ena") or str:find("[^ea][kr][kr]") and not str:find("договорна€") or act == "surcharge" then
     debug(string.format("%s\n%s", "With price type", str), 2)
-    if str:find("%d%p%dкк%s") then price = ''..str:sub(str:find("%s%d%p")+1, str:find("кк%s")-1).."00.000$" k = 0
+    if str:find("^%d%p%dкк%s") then price = ''..str:sub(str:find("^%d%p"), str:find("кк%s")-1).."00.000$" k = 0
+    elseif str:find("%d%p%dкк%s") then price = ''..str:sub(str:find("%s%d%p")+1, str:find("кк%s")-1).."00.000$" k = 0
     elseif str:find("%W-%s%d%p%d%dкк$") then price = ''..str:sub(str:find("%s%d+%p%d%dк")+1, str:find("кк")-1).."0.000$" k = 1
     elseif str:find("%W-%s%d%p%dкк$") then price = ''..str:sub(str:find("%s%d+%p%dк")+1, str:find("кк")-1).."00.000$" k = 2321
     elseif str:find("%W-%s%d%p%d+к$") then price = ''..str:sub(str:find("%s%d+%p%d+к")+1, str:find("к")-1)..".000$" k = 2156
     elseif str:find("%d%p%dккк$") then price = ''..str:sub(str:find("%s%d+%p")+1, str:find("ккк$")-1).."00.000.000$" k = 3
     elseif str:find("%d+ккк$") then price = ''..str:sub(str:find("%s%d+к")+1, str:find("ккк$")-1)..".000.000.000$" k = 4
+    
     elseif str:find("%d+kk%+торг") then price = ''..str:sub(str:find("%d+kk"), str:find("k")-1)..".000.000$ + торг" k = 0098
     elseif str:find("%d+%s?млр[д]?$") then price = ''..str:sub(str:find("%s%d+%s?мл")+1, str:find("%s?млр[д]?$")-1)..".000.000.000$" k = 5
-    elseif str:find("%d+[.,]%dkk") then price = ''..str:sub(str:find("%s%d+[.,]")+1, str:find("kk")-1).."00.000$" k = 6
+    elseif str:find("%d+[.,]%d[kK][kK]") then price = ''..str:sub(str:find("%s%d+[.,]")+1, str:find("[kK][kK]")-1).."00.000$" k = 6
     elseif str:find("%d+[.,]%dкк") then price = ''..str:sub(str:find("%s%d+[.,]")+1, str:find("кк")-1).."00.000$" k = 7
     elseif str:find("%d+[.,]%dк$") then price = ''..str:sub(str:find("%s%d+[.,]")+1, str:find("%dк")).."00$" k = 7
     elseif str:find("%d[.,]%d%sбюджет") then price = ''..str:sub(str:find("%s%d+[.,]")+1, str:find("%sбюджет")-1).."00.000$" k = 8
@@ -4647,6 +4709,8 @@ function get_price(str, act)
     elseif str:find("%W%p%d+kk$") then price = ''..str:sub(str:find("%W%p%d+k")+2, str:find("kk$")-1)..".000.000$" k = 91
     elseif str:find("%s%d+[кr][кr]$") then price = ''..str:sub(str:find("%s%d+[кr]")+1, str:find("[кr][кr]$")-1)..".000.000$" k = 10
     elseif str:find("%s%d+%sмлн") then price = ''..str:sub(str:find("%s%d+%sм")+1, str:find("%sмлн")-1)..".000.000$" k = 11
+    elseif str:find("%s%dл€м") then price = ''..str:sub(str:find("%s%dл")+1, str:find("л€м")-1)..".000.000$" k = 11
+    elseif str:find("%s%d+%sмилион") then price = ''..str:sub(str:find("%s%d+%sм")+1, str:find("%sмилион")-1)..".000.000$" k = 11
     elseif str:find("%s%d+млн") then price = ''..str:sub(str:find("%s%d+м")+1, str:find("млн")-1)..".000.000$" k = 12
     elseif str:find("%s%d+л€мов") then price = ''..str:sub(str:find("%s%d+л")+1, str:find("л€мов")-1)..".000.000$" k = 12
     elseif str:find("%W%p%d+кк$") then price = ''..str:sub(str:find("%p%d+к")+1, str:find("кк$")-1)..".000.000$" k = 131
@@ -4681,7 +4745,7 @@ function get_price(str, act)
     elseif str:find("[:]?%s%d+%p%d+%p%d+р") then price = ''..str:sub(str:find('%d+%p%d+%p%d+'), str:find("%dр")).."$" k = 34
     elseif str:find("[:]%s?%d+%p%d%d%d%p%d+%s?%$") then price = ''..str:sub(str:find('%d+[,.]%d'), str:find("%d%s?%$")).."$" k = 12
     elseif str:find("%s%d%d%d%p%d+%p%d+%s") then price = ''..str:sub(str:find('%s%d%d%d%p'), str:find("%d%s")).."$" k = 13
-    elseif str:find("%s%d+%s%d+%s%d+%$") then price = ''..str:sub(str:find('%d+%s'), str:find("%$")-1):gsub(" ", ".").."$" k = 132
+    elseif str:find("%s%d+%s%d+%s%d+%$") then price = ''..str:sub(str:find('%s%d+%s')+1, str:find("%$")-1):gsub(" ", ".").."$" k = 132
     elseif str:find("[^(скины)]%s%d+%s%d+%s%d+%s?") then price = ''..str:sub(str:find('%s%d')+1, str:find("%p?$")-1):gsub(" ", ".").."$" k = 14
     elseif str:find("[:]%s%d+%p%d+%p%d+$") then price = ''..str:sub(str:find('[:]%s%d+%p')+2, str:find("%d$")).."$" k = 5
     elseif str:find("%s%d+%s?[ к][ к]") then price = ''..str:sub(str:find("%s%d+%s?[ к]")+1, str:find("[ к][ к]")-1):gsub(" ", "")..".000.000$" k = 6
@@ -4689,9 +4753,10 @@ function get_price(str, act)
     elseif str:find("%s%d+%p%d+%p%d+$") then price = ''..str:sub(str:find('%s%d+%p%d+')+1, str:find("$")).."$" k = 16
     elseif str:find("%s%d+%p%d+%p%d+%$%p$") then price = ''..str:sub(str:find("%s%d+%p")+1, str:find("$")).."" k = 15
     elseif str:find(":%d+.%d+%$") then price = ''..str:sub(str:find(":%d+%p")+1, str:find("%$")-1).."$" k = 7 
-    elseif str:find("%W-%s%d+%p%d+%p") then price = ''..str:sub(str:find("%s%d+%p%d+")+1, str:find("[%$]?%p$")-1).."$" k = 71 
+    elseif str:find("за%s%d%p%d+%p") then price = ''..str:sub(str:find("%s%d+%p%d+")+1, str:find("%p%s%W+")-1).."$" k = 71
+    elseif str:find("%W-%s%d+%p%d+%p") then price = ''..str:sub(str:find("%s%d+%p%d+")+1, str:find("[%$]?%p$")-1).."$" k = 71
     elseif str:find(":%d+.%d+.%d+$") then price = ''..str:sub(str:find(":%d+%p")+1, str:find("$")-1).."$" k = 129
-    elseif str:find("%s%d+[кk]$") then price = ''..str:sub(str:find("%s%d+[кk]")+1, str:find("[кk]$")-1):gsub(" ", "")..".000$" k = 9
+    elseif str:find("%s%d+[кkr]$") then price = ''..str:sub(str:find("%s%d+[кkr]")+1, str:find("[кkr]$")-1):gsub(" ", "")..".000$" k = 9
     elseif str:find("[÷ц]ена%s%d+%s%d+$") then price = ''..str:sub(str:find("ена%s%d+%s")+4, str:find("$")-1):gsub(" ", ".").."$" k = 38
     elseif str:find("ена%s%d+%s%d+$") then price = ''..str:sub(str:find("%s%d+")+1, str:find("$")):gsub(" ", ".").."$" k = 9
     elseif str:find("[÷ц]ена%d+%p%d+%p%d+%$") then price = ''..str:sub(str:find("а%d+")+1, str:find("%$")) k = 92
@@ -4731,12 +4796,15 @@ function get_price(str, act)
     elseif str:find("%s%d%d%d%d0000$") then part = str:sub(str:find("%s%d+")+1, str:find("%s%d+")+4) price = ''..part:sub(0, 2).."."..part:sub(3,4).."0.000$" k = 1209
     elseif str:find("%s%d%d%d%d%d%d%d%d%d$") then part = str:sub(str:find("%s%d")+1, str:find("%s%d")+9) price = ''..part:sub(0, 3).."."..part:sub(4,6).."."..part:sub(7,9).."$" k = 1209 print(part:sub(0, 2))
     elseif str:find("%d%dќ.ќќќ.ќќќ%$") then price = str:sub(str:find("%d%dќ"), str:find("%$")):gsub("ќ", "0") k = 775
+    elseif str:find("%d+%s000%s000$") then price = str:sub(str:find("%d+%s0"), str:find("$")):gsub(" ", ".") k = 776
+    elseif str:find("''%d000000''") then price = str:sub(str:find("''%d000")+2, str:find("0''$")-6):gsub(" ", ".")..".000.000$" k = 776
+    elseif str:find("''%d%d0000''") then price = str:sub(str:find("''%d000")+2, str:find("0''$")-3):gsub(" ", ".")..".000$" k = 776
     -- цена 31. 000 000
     elseif str:find("%d+.%s000%s000$") then price = str:sub(str:find("%d+%."), str:find("$")):gsub(" ", "%."):gsub("%.%.", "%.").."$" k = 775
     else price="unknown" k="a" -- сф за 750к или пре
     end
     if price:find("24.7%s") then price = price:gsub("24.7 ", "") end
-    -- debug(str.." - "..price.." | "..k, 4)
+    debug(str.." - "..price.." | "..k, 4)
     --debug(act, 2)
     if act == "surcharge" then
       return price
@@ -4749,7 +4817,7 @@ function get_price(str, act)
     elseif str:find("%d+[.,]%d$") and not str:find("[Pp]rice") then price = ''..str:sub(str:find("%s%d+%p")+1, str:find("$")).."00.000$" return act_text[act]..price --debug(str.." - "..price.." | 7684", 4)
     elseif str:find("%s%d%p%d+%p%d+$") then price = ''..str:sub(str:find("%s%d%p")+1, str:find("$")-1).."$"  return act_text[act]..price --debug(str.." - "..price.." | 7684", 4)
     elseif str:find("%s%d[,.]%d%d$") then price = ''..str:sub(str:find("%s%d%p")+1, str:find("$")).."0.000$"  return act_text[act]..price --debug(str.." - "..price.." | 9933", 4)
-    elseif str:find("[^(скин)]%s%d+%p%d+%$") then price = ''..str:sub(str:find("%s%d+%p")+1, str:find("%$")-1).."$" return act_text[act]..price 
+    elseif str:find("[^(скин)]%s%d+%p%d+%$") then price = ''..str:sub(str:find("%s%d+%p")+1, str:find("%$")-1).."$" return (act_text[act] or "s")..price 
     elseif str:find("[^(бирки)|(бирку)|(скин)|(одам)|(rice)]%s%d+[,.]%d+$") then price = ''..str:sub(str:find("%s%d+%p")+1, str:find("$")).."$" return act_text[act]..price --debug(str.." - "..price.." | 9933", 4)
     elseif str:find("[^(скины)]%s%d+[.]%d+[.]%d+$") then price = ''..str:sub(str:find("%s%d+[.]")+1, str:find("$")-1).."$"  return act_text[act]..price --debug(str.." - "..price.." | 8648", 4)
     elseif str:find("%s%d+%p%d+%p%d+%$") then price = ''..str:sub(str:find("%s%d+%p%d+%p")+1, str:find("%$"))   return act_text[act]..price --debug(str.." - "..price.." | 4366", 4)
@@ -4769,12 +4837,15 @@ function get_price(str, act)
     elseif str:find("%s%d00000$") then price = str:sub(str:find("%s%d+")+1, str:find("0")-1).."00.000$" return act_text[act]..price
     elseif str:find("%s%d00[кr]") then price = str:sub(str:find("%s%d00[кr]")+1, str:find("00[кr]")-1).."00.000$" return act_text[act]..price
     elseif str:find("%s%d+%sк$") then price = ''..str:sub(str:find("%s%d+%sк")+1, str:find("%sк$")-1)..".000.000$" return act_text[act]..price
-    elseif str:find("%s%d+%sкк$") then price = ''..str:sub(str:find("%s%d+%sкк")+1, str:find("%sкк$")-1)..".000.000$" return act_text[act]..price
+    elseif str:find("%s%d+%sкк$") then price = ''..str:sub(str:find("%s%d+%sкк")+1, str:find("%sкк$")-1):gsub(",", ".")..".000.000$"  return act_text[act]..price
     elseif str:find("%s%d%d%d00000") then part = str:sub(str:find("%s%d+")+1, str:find("%d0")) price = ''..part:sub(0, 2).."."..part:sub(3,3).."00.000$"  return act_text[act]..price --debug(str.." - "..price.." | 0003", 4)
-    elseif str:find("%s%d+%p%d%sкк$") then price = ''..str:sub(str:find("%s%d+%p")+1, str:find("%sкк$")-1).."00.000$" k = 21 return act_text[act]..price
+    elseif str:find("%s%dл€м") then price = ''..str:sub(str:find("%s%dл")+1, str:find("л€м")-1)..".000.000$" return act_text[act]..price
+    elseif str:find("%s%d+%p%d%sкк$") then price = ''..str:sub(str:find("%s%d+%p")+1, str:find("%sкк$")-1):gsub(",", ".").."00.000$" k = 21  return act_text[act]..price
     elseif str:find("%W+%s%d+%p%d+%s%sкк$") then price = ''..str:sub(str:find("%s%d+%p%d%s%s")+1, str:find("%s%sкк$")-1):gsub(",", ".").."00.000$" k = 30 return act_text[act]..price
+    elseif str:find("%d+%s000%s000$") then price = (str:sub(str:find("%d+%s0"), str:find("%d$")):gsub(" ", ".") or '0')..'$'  k = 776 return act_text[act]..price
+    elseif str:find("%d+  $") then price = ''..(str:sub(str:find("%s%d+ ")+1, str:find("%d  $")) or "error")..".000.000$"  k = 4 return act_text[act]..price
       -- фт 4.8
-    elseif str:find("%d%p%d$") and not str:find("[Pp]rice") then price = ''..str:sub(str:find("%s%d+%p")+1, str:find("$")).."00.000$" return act_text[act]..price --debug(str.." - "..price.." | 7684", 4)
+    elseif str:find("%d%p%d$") and not str:find("[Pp]rice") then price = ''..str:sub(str:find("%s%d+%p")+1, str:find("$")).."00.000$" k = 43 return act_text[act]..price --debug(str.." - "..price.." | 7684", 4)
       -- 12 500 000
   elseif act == "" or act == "carmarket" then
     -- debug(str, 1)
@@ -4791,9 +4862,9 @@ function get_price(str, act)
         elseif act == "my_change" then
           return "— моей ƒѕ."
         elseif act == "d_change" then
-          return "— доплатой."
+          return ""
         elseif act == "change" then
-          return "— доплатой."
+          return ""
         else
           return "..."
         end
